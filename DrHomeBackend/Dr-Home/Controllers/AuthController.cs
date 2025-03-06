@@ -100,8 +100,6 @@ namespace Dr_Home.Controllers
             return (user == null) ? BadRequest("There Is No User With This Id"):Ok(user);
         }
 
-
-
         //Get User Profile
         [HttpGet("Profile")]
         [Authorize(Roles = "Patient")]
@@ -116,12 +114,9 @@ namespace Dr_Home.Controllers
             return (!response.Success) ? BadRequest(response) : Ok(response);
         }
 
-
-
         //Update User Details 
         [HttpPut("UpdateProfile")]
         [Authorize(Roles = "Patient")]
-
         public async Task<IActionResult> UpdateProfile(UserProfileDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -137,7 +132,6 @@ namespace Dr_Home.Controllers
         //Change The User`s Password 
         [HttpPut("ChangePassword")]
         [Authorize]
-        
         public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
         {
             if(!ModelState.IsValid) return BadRequest(ModelState);
@@ -149,6 +143,13 @@ namespace Dr_Home.Controllers
             var response = await _auth.ChangePassword(Guid.Parse(userId), dto);
 
             return ( !response.Success ) ? BadRequest(response) : Ok(response) ;
+        }
+
+        [HttpGet("forgetpassword")]
+        public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
+        {
+            
+            return Ok("a7a");
         }
 
         //Delete User By Id Endpoint
