@@ -12,7 +12,6 @@ namespace Dr_Home.Email_Sender
     {
         public async Task SendRegisterEmailAsync(SendEmailRegisterDto dto)
         {
-            Console.WriteLine("A7a");
             var email = new MimeMessage();
 
             var sender = _configuration["EmailData:Email"];

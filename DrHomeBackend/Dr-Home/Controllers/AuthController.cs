@@ -20,7 +20,6 @@ namespace Dr_Home.Controllers
     {
         //Register Endpoint
         [HttpPost("register")]
-
         public async Task<IActionResult> register(RegisterDto dto)
         {
             if (!ModelState.IsValid)
@@ -43,9 +42,8 @@ namespace Dr_Home.Controllers
                     email = response.Data.Email
 
                 }
-                );
+            );
         }
-
 
         //Login Endpoint
         [HttpPost("login")]
@@ -63,11 +61,8 @@ namespace Dr_Home.Controllers
                 email = response.Data.Email
             });
         }
-
-
-
+        
         //Verify Endpoint
-
         [HttpGet("verify")]
         [Authorize]
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
@@ -75,9 +70,7 @@ namespace Dr_Home.Controllers
             bool IsVerified = await _auth.VerifyAccount(token);
             return (IsVerified) ? Ok("The Account Is Verified Successfully") : Unauthorized();
         }
-
-
-
+        
         //Get All Users Endpoint
         [HttpGet("")]
         [Authorize(Roles = "Admin")]
@@ -87,13 +80,10 @@ namespace Dr_Home.Controllers
             if (users == null) return BadRequest("There Is No Users");
             return Ok(users);
         }
-
-
-
+        
         //Get User By Id Endpoint
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
-        
         public async Task<IActionResult>GetUserById(Guid id)
         {
             User user = await _auth.GetUser(id);
@@ -144,14 +134,7 @@ namespace Dr_Home.Controllers
 
             return ( !response.Success ) ? BadRequest(response) : Ok(response) ;
         }
-
-        [HttpGet("forgetpassword")]
-        public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
-        {
-            
-            return Ok("a7a");
-        }
-
+        
         //Delete User By Id Endpoint
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
@@ -167,6 +150,14 @@ namespace Dr_Home.Controllers
                 Success = true,
                 Message = "User Deleted Successfully"
             });
+        }
+        
+        
+        [HttpGet("forgetpassword")]
+        public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
+        {
+            var response = await _auth.ForgetPassword(dto);
+            return Ok("a7a");
         }
     }
 }
