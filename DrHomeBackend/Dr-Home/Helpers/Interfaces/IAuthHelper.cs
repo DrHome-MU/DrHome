@@ -34,5 +34,6 @@ namespace Dr_Home.Helpers.Interfaces
         Task<User> GetUser(Guid id);
 
         Task<ApiResponse<User>>ChangePassword(Guid id , ChangePasswordDto dto);
+        Task<string> ForgetPassword(forgotPasswordDto dto);
     }
 }
