@@ -9,6 +9,13 @@ namespace Dr_Home.Data.Configuration
         public void Configure(EntityTypeBuilder<Clinic> builder)
         {
             builder.ToTable("Clinics");
+
+            //One-To-Many (doctor & clinics)
+            builder.HasOne(c => c.doctor)
+                .WithMany(d => d.clinics)
+                .HasForeignKey(c => c.DoctorId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

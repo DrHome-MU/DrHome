@@ -83,9 +83,9 @@ namespace Dr_Home.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
-            var users = await _auth.GetUsers();
-            if (users == null) return BadRequest("There Is No Users");
-            return Ok(users);
+            var response = await _auth.GetUsers();
+
+            return (response.Success == true) ? Ok(response) : NotFound(response);
         }
 
 
@@ -93,37 +93,40 @@ namespace Dr_Home.Controllers
         //Get User By Id Endpoint
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
-        
-        public async Task<IActionResult>GetUserById(Guid id)
+
+        public async Task<IActionResult> GetUserById(Guid id)
         {
-            User user = await _auth.GetUser(id);
-            return (user == null) ? BadRequest("There Is No User With This Id"):Ok(user);
+            var response = await _auth.GetUser(id);
+
+            return (response.Success == true) ? Ok(response) : NotFound(response);
         }
 
 
 
         //Get User Profile
         [HttpGet("Profile")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Roles = "Patient,Admin")]
         public async Task<IActionResult> GetUserProfile()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null) return Unauthorized();
+            if (userId == null) return Unauthorized(new {Success = false , Message = "Unauthorized User"});
 
             var response = await _auth.GetUserProfile(Guid.Parse(userId));
 
-            return (!response.Success) ? BadRequest(response) : Ok(response);
+            return (!response.Success) ? NotFound(response) : Ok(response);
         }
 
 
 
         //Update User Details 
         [HttpPut("UpdateProfile")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Roles = "Patient,Admin")]
 
         public async Task<IActionResult> UpdateProfile(UserProfileDto dto)
         {
+            if (!ModelState.IsValid) return BadRequest(new { Success = false, Message = ModelState });
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (userId == null) return Unauthorized();
@@ -156,16 +159,9 @@ namespace Dr_Home.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
-            var user = await _auth.DeleteUser(id);
-            return (user == null) ? BadRequest(new
-            {
-                Success = false,
-                message = "There Is no user with this Id"
-            }) : Ok(new
-            {
-                Success = true,
-                Message = "User Deleted Successfully"
-            });
+            var response = await _auth.DeleteUser(id);
+            
+            return (response.Success) ? Ok(response) : NotFound(response);
         }
     }
 }

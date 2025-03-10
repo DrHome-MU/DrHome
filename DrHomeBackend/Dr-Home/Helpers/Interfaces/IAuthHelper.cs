@@ -23,15 +23,15 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<bool> VerifyAccount(string token);
 
-        Task<IEnumerable<User>> GetUsers();
+        Task<ApiResponse<IEnumerable<User>>> GetUsers();
 
         Task<ApiResponse<UserProfileDto>> GetUserProfile(Guid id);
 
         Task<ApiResponse<UserProfileDto>> UpdateProfile(Guid id , UserProfileDto dto);
 
-        Task<User> DeleteUser(Guid id);
+        Task<ApiResponse<User>> DeleteUser(Guid id);
 
-        Task<User> GetUser(Guid id);
+        Task<ApiResponse<User>> GetUser(Guid id);
 
         Task<ApiResponse<User>>ChangePassword(Guid id , ChangePasswordDto dto);
     }

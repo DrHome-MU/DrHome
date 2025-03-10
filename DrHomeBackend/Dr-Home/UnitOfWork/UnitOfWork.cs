@@ -15,24 +15,28 @@ namespace Dr_Home.UnitOfWork
 
         public IDoctorService _doctorService {  get; private set; }
 
-        public IReviewService _reviewService {  get; private set; } 
+        public IReviewService _reviewService {  get; private set; }
+
+        public IClinicService _clinicalService {  get; private set; }   
 
         public unitOfWork(AppDbContext context,
             IPatientService patientService , IUserService userService , 
-            IDoctorService doctorService , IReviewService reviewService)
+            IDoctorService doctorService , IReviewService reviewService , 
+            IClinicService clinicService)
         {
             _context = context;
             _userService = userService;
             _patientService = patientService;
             _doctorService = doctorService;
             _reviewService = reviewService;
+            _clinicalService = clinicService;
            
 
         }
 
-        public int Complete()
+        public async Task<int> Complete()
         {
-            return  _context.SaveChanges();
+            return  await _context.SaveChangesAsync();
         }
 
         public void Dispose()

@@ -13,6 +13,9 @@ namespace Dr_Home.Data.Configuration
            builder.HasOne(d => d._specialization)
                 .WithMany(s => s.Doctors)
                 .HasForeignKey(d => d.SpecializationId);
+
+
+            
         }
     }
 }

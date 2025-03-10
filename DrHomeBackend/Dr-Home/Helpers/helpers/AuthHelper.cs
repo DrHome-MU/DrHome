@@ -47,7 +47,7 @@ namespace Dr_Home.Helpers.helpers
                 DateOfBirth = dto.DateOfBirth,
             };
               await _unitOfWork._patientService.AddAsync(patient);
-              _unitOfWork.Complete();
+              await  _unitOfWork.Complete();
             var tokenParameters = new CreateTokenDto
             {
                 FullName = patient.FullName,
@@ -156,6 +156,16 @@ namespace Dr_Home.Helpers.helpers
                     Data = null
                 };
             }
+           
+
+            if (!VerifyPassword(dto.Password , user.HashPassword))
+            {
+                return new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = "Email Or Password Are Wrong"
+                };
+            }
            //if(user.IsActive == false)
            // {
            //     return new ApiResponse<User>
@@ -191,22 +201,39 @@ namespace Dr_Home.Helpers.helpers
             var user = await _unitOfWork._userService.GetById(Guid.Parse(userId));
             if (user == null) return false;
             user.IsActive = true;
-            _unitOfWork.Complete();
+            await _unitOfWork.Complete();
 
             return true;
         }
 
-        public async Task<IEnumerable<User>> GetUsers()
+        public async Task<ApiResponse<IEnumerable<User>>> GetUsers()
         {
-            var users = await  _unitOfWork._userService.GetAllAsync();
-            return users;
+            var users = await _unitOfWork._userService.GetAllAsync();
+
+            if (!users.Any()) return new ApiResponse<IEnumerable<User>>
+            {
+                Success = false,
+                Message = "There is no users"
+            };
+
+
+            return new ApiResponse<IEnumerable<User>>
+            {
+                Success = true,
+                Message = "Data Loaded Successfully",
+                Data = users
+            };
         }
 
-        public async Task<User> DeleteUser(Guid id)
+        public async Task<ApiResponse<User>> DeleteUser(Guid id)
         {
+            
             var user = await _unitOfWork._userService.GetById(id);
 
-            if (user == null) return null;
+            if (user == null)
+            {
+                return new ApiResponse<User> { Success = false, Message = "Users Doesn`t Exist" };
+            }
 
             if (user.role == "Patient")
             {
@@ -216,21 +243,30 @@ namespace Dr_Home.Helpers.helpers
                 {
                     await _unitOfWork._reviewService.DeleteAsync(review);
                 }
-                _unitOfWork.Complete();
+              await  _unitOfWork.Complete();
             }
             await _unitOfWork._userService.DeleteAsync(user);
-            _unitOfWork.Complete();
-            return user;
+            await  _unitOfWork.Complete();
+
+            return new ApiResponse<User> { Success = true, Message = "User Deleted Successfully" };
         }
 
-        public async  Task<User> GetUser(Guid id)
+        public async Task<ApiResponse<User>> GetUser(Guid id)
         {
-           return await _unitOfWork._userService.GetById(id);  
+            var user = await _unitOfWork._userService.GetById(id);
+
+
+            if (user == null)
+            {
+                return new ApiResponse<User> { Success = false, Message = "User Not Found" };
+            }
+
+            return new ApiResponse<User> { Success = true, Message = "User Found", Data = user };
         }
 
         public async Task<ApiResponse<UserProfileDto>> GetUserProfile(Guid id)
         {
-           var patient = await _unitOfWork._patientService.GetById(id);
+           var patient = await _unitOfWork._userService.GetById(id);
 
 
             if(patient == null)
@@ -262,7 +298,7 @@ namespace Dr_Home.Helpers.helpers
 
         public async Task<ApiResponse<UserProfileDto>> UpdateProfile(Guid id, UserProfileDto dto)
         {
-            var user = await _unitOfWork._patientService.GetById(id);
+            var user = await _unitOfWork._userService.GetById(id);
 
             //Handle If User Is Null
             if (user == null)
@@ -298,8 +334,8 @@ namespace Dr_Home.Helpers.helpers
             user.city = dto.city;
             dto.region = dto.region;
 
-            await _unitOfWork._patientService.UpdateAsync(user);
-            _unitOfWork.Complete();
+            await _unitOfWork._userService.UpdateAsync(user);
+            await  _unitOfWork.Complete();
             
             
             return new ApiResponse<UserProfileDto>
@@ -337,7 +373,7 @@ namespace Dr_Home.Helpers.helpers
 
             user.HashPassword = hashPassword;
 
-            _unitOfWork.Complete();
+            await _unitOfWork.Complete();
 
             return new ApiResponse<User>
             {
