@@ -16,8 +16,6 @@ namespace Dr_Home.Helpers.helpers
 {
     public class AuthHelper(IUnitOfWork _unitOfWork , jwtOptions jwt,IEmailSender _sender) : IAuthHelper
     {
-        
-
         public async Task<ApiResponse<Patient>> RegisterPatient(RegisterDto dto)
         {
            
@@ -46,8 +44,10 @@ namespace Dr_Home.Helpers.helpers
                 ConfirmationCode = confimationCode,
                 DateOfBirth = dto.DateOfBirth,
             };
+
               await _unitOfWork._patientService.AddAsync(patient);
               await  _unitOfWork.Complete();
+
             var tokenParameters = new CreateTokenDto
             {
                 FullName = patient.FullName,
@@ -56,10 +56,8 @@ namespace Dr_Home.Helpers.helpers
             };
 
             string token = await CreateJwtToken(tokenParameters);
-
             string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
             string link = $"{appUrl}/api/auth/verify?token={token}";
-            Console.WriteLine(link);
 
             string html_tmp = $@"
             <div>
@@ -84,6 +82,7 @@ namespace Dr_Home.Helpers.helpers
             };
 
         }
+        
         public string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
@@ -101,6 +100,7 @@ namespace Dr_Home.Helpers.helpers
                new Claim(ClaimTypes.NameIdentifier , parameters.Id.ToString()),
                new Claim(ClaimTypes.Name , parameters.FullName) ,
                new Claim(ClaimTypes.Role,parameters.role)
+               // new Claim(ClaimTypes.Email,parameters.Email)
            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
@@ -266,7 +266,9 @@ namespace Dr_Home.Helpers.helpers
 
         public async Task<ApiResponse<UserProfileDto>> GetUserProfile(Guid id)
         {
+
            var patient = await _unitOfWork._userService.GetById(id);
+
 
 
             if(patient == null)
@@ -322,10 +324,7 @@ namespace Dr_Home.Helpers.helpers
                 };
             }
 
-            
-
             //Update Data 
-
             user.FullName = dto.FullName;
             user.Gender = dto.Gender;
             user.Email = dto.Email;
@@ -337,15 +336,12 @@ namespace Dr_Home.Helpers.helpers
             await _unitOfWork._userService.UpdateAsync(user);
             await  _unitOfWork.Complete();
             
-            
             return new ApiResponse<UserProfileDto>
             {
                 Success = true,
                 Message = "Data Updated Successfully",
                 Data = dto
             };
-
-
         }
 
         public async Task<ApiResponse<User>> ChangePassword(Guid id, ChangePasswordDto dto)
@@ -380,6 +376,33 @@ namespace Dr_Home.Helpers.helpers
                 Success = true, 
                 Message = "تم تعديل كلمة المرور بنجاح"
             };
+        }
+
+        public async Task<string> ForgetPassword(forgotPasswordDto dto)
+        {
+            var tokenParameters = new CreateTokenDto
+            {
+                Email = dto.Email
+            };
+            string token = await CreateJwtToken(tokenParameters);
+            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
+            string link = $"{appUrl}/api/auth/ChangePassword?token={token}";
+            string html_tmp = $@"
+            <div>
+                <p>Click on the link below to reset your account password</p>
+                <a href='{link}'>Reset</a>
+            </div>";
+            
+            var sendDto = new SendEmailRegisterDto
+            {
+                toEmail = dto.Email,
+                subject = "Dr Home Reset Password",
+                message = html_tmp
+            };
+
+            await _sender.SendRegisterEmailAsync(sendDto);
+
+            return "a7a";
         }
     }
 }

@@ -13,8 +13,6 @@ namespace Dr_Home.Data.Configuration
 
             builder.HasIndex(X=>X.Email)
                 .IsUnique();
-
-           
         }
     }
 }

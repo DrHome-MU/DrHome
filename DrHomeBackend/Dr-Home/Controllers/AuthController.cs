@@ -20,7 +20,6 @@ namespace Dr_Home.Controllers
     {
         //Register Endpoint
         [HttpPost("register")]
-
         public async Task<IActionResult> register(RegisterDto dto)
         {
             if (!ModelState.IsValid)
@@ -43,9 +42,8 @@ namespace Dr_Home.Controllers
                     email = response.Data.Email
 
                 }
-                );
+            );
         }
-
 
         //Login Endpoint
         [HttpPost("login")]
@@ -63,11 +61,8 @@ namespace Dr_Home.Controllers
                 email = response.Data.Email
             });
         }
-
-
-
+        
         //Verify Endpoint
-
         [HttpGet("verify")]
         [Authorize]
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
@@ -75,9 +70,7 @@ namespace Dr_Home.Controllers
             bool IsVerified = await _auth.VerifyAccount(token);
             return (IsVerified) ? Ok("The Account Is Verified Successfully") : Unauthorized();
         }
-
-
-
+        
         //Get All Users Endpoint
         [HttpGet("")]
         [Authorize(Roles = "Admin")]
@@ -87,21 +80,19 @@ namespace Dr_Home.Controllers
 
             return (response.Success == true) ? Ok(response) : NotFound(response);
         }
-
-
-
+        
         //Get User By Id Endpoint
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
 
+
         public async Task<IActionResult> GetUserById(Guid id)
+
         {
             var response = await _auth.GetUser(id);
 
             return (response.Success == true) ? Ok(response) : NotFound(response);
         }
-
-
 
         //Get User Profile
         [HttpGet("Profile")]
@@ -117,11 +108,11 @@ namespace Dr_Home.Controllers
             return (!response.Success) ? NotFound(response) : Ok(response);
         }
 
-
-
         //Update User Details 
         [HttpPut("UpdateProfile")]
+
         [Authorize(Roles = "Patient,Admin")]
+
 
         public async Task<IActionResult> UpdateProfile(UserProfileDto dto)
         {
@@ -140,7 +131,6 @@ namespace Dr_Home.Controllers
         //Change The User`s Password 
         [HttpPut("ChangePassword")]
         [Authorize]
-        
         public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
         {
             if(!ModelState.IsValid) return BadRequest(ModelState);
@@ -153,7 +143,7 @@ namespace Dr_Home.Controllers
 
             return ( !response.Success ) ? BadRequest(response) : Ok(response) ;
         }
-
+        
         //Delete User By Id Endpoint
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
@@ -162,6 +152,14 @@ namespace Dr_Home.Controllers
             var response = await _auth.DeleteUser(id);
             
             return (response.Success) ? Ok(response) : NotFound(response);
+        }
+        
+        
+        [HttpGet("forgetpassword")]
+        public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
+        {
+            var response = await _auth.ForgetPassword(dto);
+            return Ok("a7a");
         }
     }
 }
