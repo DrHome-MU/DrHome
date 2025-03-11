@@ -12,7 +12,7 @@ namespace Dr_Home.Helpers.helpers
     public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,IEmailSender _sender ,
         IWebHostEnvironment _webHost) : IDoctorHelper
     {
-        private readonly string _imagesPath = $"{_webHost.WebRootPath}/Pictures/Doctors/";
+        private readonly string _imagesPath = $"{_webHost.WebRootPath}/pictures/";
         public async Task<ApiResponse<Doctor>> AddDoctor(AddDoctorDto dto)
         {
             var hashPassword = _auth.HashPassword(dto.Password);
