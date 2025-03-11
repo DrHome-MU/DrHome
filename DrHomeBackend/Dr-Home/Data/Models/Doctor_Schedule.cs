@@ -7,8 +7,6 @@ namespace Dr_Home.Data.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid DoctorId { get; set; }
-
         public Guid ClinicId { get; set; }
 
         public string WorkDay { get; set; }
@@ -19,7 +17,6 @@ namespace Dr_Home.Data.Models
 
         public decimal Fee { get; set; }
 
-        public Doctor? doctor { get; set; }
         public Clinic? clinic { get; set; } 
     }
 }

@@ -11,10 +11,7 @@ namespace Dr_Home.Data.Configuration
             builder.ToTable("Schedules");
 
             //Schedules With Doctor 
-            builder.HasOne(s => s.doctor)
-                .WithMany(d => d._schedules)
-                .HasForeignKey(s => s.DoctorId)
-                .OnDelete(DeleteBehavior.NoAction);
+           
 
             //Scheules With Clinic 
             builder.HasOne(s => s.clinic)

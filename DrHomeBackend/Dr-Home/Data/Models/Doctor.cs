@@ -20,7 +20,7 @@ namespace Dr_Home.Data.Models
 
         public List<Review>? Reviews { get; set; }
 
-        public List<Doctor_Schedule> ? _schedules { get; set; }
+        public List<Clinic> ? clinics { get; set; }
         
 
     }

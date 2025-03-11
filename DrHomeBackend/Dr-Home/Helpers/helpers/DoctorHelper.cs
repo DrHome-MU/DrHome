@@ -5,11 +5,14 @@ using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,IEmailSender _sender) : IDoctorHelper
+    public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,IEmailSender _sender ,
+        IWebHostEnvironment _webHost) : IDoctorHelper
     {
+        private readonly string _imagesPath = $"{_webHost.WebRootPath}/pictures/";
         public async Task<ApiResponse<Doctor>> AddDoctor(AddDoctorDto dto)
         {
             var hashPassword = _auth.HashPassword(dto.Password);
@@ -38,7 +41,7 @@ namespace Dr_Home.Helpers.helpers
             };
 
             await _unitOfWork._doctorService.AddAsync(doctor);
-            _unitOfWork.Complete();
+            await _unitOfWork.Complete();
 
             var tokenParameters = new CreateTokenDto
             {
@@ -71,26 +74,44 @@ namespace Dr_Home.Helpers.helpers
 
             return new ApiResponse<Doctor>
             {
-                Success = false, 
+                Success = true, 
                 Message = "The Doctor Added Successfully",
                 Data = doctor
 
             };
         }
 
-        public async Task<Doctor> DeleteDoctor(Guid id)
+        /// Delete Doctor
+       
+
+        public async Task<ApiResponse<Doctor>> DeleteDoctor(Guid id)
         {
             var doctor = await _unitOfWork._doctorService.GetById(id); 
 
-            if(doctor != null)
+           if(doctor == null)
             {
-                var ret = await _unitOfWork._doctorService.DeleteAsync(doctor);
-                await _unitOfWork._userService.DeleteAsync(doctor);
-                _unitOfWork.Complete();
-                return ret;
+                return new ApiResponse<Doctor>
+                {
+                    Success = false,
+                    Message = "Doctor Doesn`t Exist"
+                }; 
             }
-            return null;
+           
+                await _unitOfWork._doctorService.DeleteAsync(doctor);
+                await _unitOfWork._userService.DeleteAsync(doctor);
+
+                await _unitOfWork.Complete();
+
+            return new ApiResponse<Doctor>
+            {
+                Success = true,
+                Message = "Doctor Deleted Successfully"
+            };
+            
         }
+
+        /// Delete Doctor Pic
+        
 
         public async Task DeletePic(Guid id, string uploadPath)
 
@@ -104,7 +125,7 @@ namespace Dr_Home.Helpers.helpers
             }
           
         }
-
+        /// Update Doctor Data
         public async Task<ApiResponse<Doctor>> UpdateDoctor(Guid userId , UpdateDoctorDto dto)
         {
             var doctor = await  _unitOfWork._doctorService.GetById(userId);
@@ -128,19 +149,17 @@ namespace Dr_Home.Helpers.helpers
             }
             
 
-           
-
-            var uploadPath  = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Pictures/Doctors");
+            var uploadPath  = Path.Combine(Directory.GetCurrentDirectory(), "/Pictures");
 
             if (dto.PersonalPic != null)
             {
                 var param = new UpdatePictureDto
                 {
-                    uploadPath = uploadPath,
+                    
                     pic = dto.PersonalPic,
                     Id = userId
                 };
-                doctor.ProfilePic_Path = await UpdateDoctorPic(param);
+                doctor.ProfilePic_Path = await uploadImage(param);
             }
             else
             {
@@ -160,7 +179,7 @@ namespace Dr_Home.Helpers.helpers
             
             //Update The Record in the database
             await _unitOfWork._doctorService.UpdateAsync(doctor);
-            _unitOfWork.Complete();
+            await  _unitOfWork.Complete();
 
 
             return new ApiResponse<Doctor>
@@ -171,7 +190,21 @@ namespace Dr_Home.Helpers.helpers
             };
 
         }
+        public async Task<string> uploadImage(UpdatePictureDto dto)
+        {
+            var fileName = $"{dto.Id}{Path.GetExtension(dto.pic.FileName)}";
 
+            var path = Path.Combine(_imagesPath, fileName);
+
+            using var stream = File.Create(path);
+
+            await dto.pic.CopyToAsync(stream);
+
+
+            return _imagesPath + fileName;
+
+        }
+        /// Update Doctor Pic
         public async Task<string> UpdateDoctorPic(UpdatePictureDto dto)
         {
             if (!Directory.Exists(dto.uploadPath)) { Directory.CreateDirectory(dto.uploadPath); }
@@ -190,8 +223,32 @@ namespace Dr_Home.Helpers.helpers
                 await dto.pic.CopyToAsync(stream);
             }
 
-            return newFileName;
+            return newFilePath;
 
         }
+
+        /// Get All Doctors
+        public async Task<ApiResponse<IEnumerable<Doctor>>> GetDoctors()
+        {
+            var doctors = await _unitOfWork._doctorService.GetAllAsync();
+
+            if (!doctors.Any())
+            {
+                return new ApiResponse<IEnumerable<Doctor>>
+                {
+                    Success = false,
+                    Message = "There Is No Doctors"
+                };
+            }
+
+            return new ApiResponse<IEnumerable<Doctor>>
+            {
+                Success = true,
+                Message = "Loading Doctors Done Successfully",
+                Data = doctors
+            };
+        }
+
+       
     }
 }

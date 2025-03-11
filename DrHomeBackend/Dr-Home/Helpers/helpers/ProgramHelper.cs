@@ -46,7 +46,7 @@ namespace Dr_Home.Helpers.helpers
             //UseSqlServer(_configuration.GetConnectionString("Default")));
 
             services.AddDbContext<AppDbContext>(options => options.
-           UseSqlServer(_configuration.GetConnectionString("host")));
+           UseSqlServer(_configuration.GetConnectionString("host")),ServiceLifetime.Scoped);
 
             //AuthHelper
             services.AddScoped<IAuthHelper, AuthHelper>();
@@ -71,6 +71,15 @@ namespace Dr_Home.Helpers.helpers
 
             //Review Helper 
             services.AddScoped<IReviewHelper, ReviewHelper>();
+
+            //Clinic Helper
+
+            services.AddScoped<IClinicHelper, ClinicHelper>();
+
+            //Clinic Service 
+
+            services.AddScoped<IClinicService, ClinicService>();
+
             //Jwt Token 
             var JwtOptions = _configuration.GetSection("Jwt").Get<jwtOptions>();
             services.AddSingleton(JwtOptions);
@@ -102,6 +111,9 @@ namespace Dr_Home.Helpers.helpers
 
             //Cors 
             app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+
+            app.UseStaticFiles();
+            app.UseRouting();
 
             app.UseAuthorization();
 

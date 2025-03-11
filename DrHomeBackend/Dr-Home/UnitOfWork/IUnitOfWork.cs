@@ -14,6 +14,7 @@ namespace Dr_Home.UnitOfWork
 
         IReviewService _reviewService { get; }
 
-        int Complete();
+        IClinicService _clinicalService { get; }
+        Task<int> Complete();
     }
 }

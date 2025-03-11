@@ -6,6 +6,6 @@
 
         public IFormFile pic {  get; set; } 
 
-        public string uploadPath { get; set; }
+        public string ? uploadPath { get; set; }
     }
 }

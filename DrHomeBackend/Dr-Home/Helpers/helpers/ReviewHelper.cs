@@ -21,7 +21,7 @@ namespace Dr_Home.Helpers.helpers
             };
 
             await _unitOfWork._reviewService.AddAsync(review);
-            _unitOfWork.Complete(); 
+            await  _unitOfWork.Complete(); 
 
             return new ApiResponse<Review>{
                 Success = true ,
@@ -55,7 +55,7 @@ namespace Dr_Home.Helpers.helpers
             }
 
             await _unitOfWork._reviewService.DeleteAsync(review);
-            _unitOfWork.Complete();
+            await _unitOfWork.Complete();
 
             return new ApiResponse<Review>
             {
@@ -189,7 +189,7 @@ namespace Dr_Home.Helpers.helpers
             review.rating = dto.rating;
 
             await _unitOfWork._reviewService.UpdateAsync(review);
-            _unitOfWork.Complete();
+            await _unitOfWork.Complete();
 
             return new ApiResponse<Review>
             {
