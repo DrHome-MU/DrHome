@@ -1,15 +1,19 @@
 ﻿using Dr_Home.Data;
 using Dr_Home.DTOs.AuthDTOs;
 using Dr_Home.Email_Sender;
+using Dr_Home.File_Manager;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.Services.Interfaces;
 using Dr_Home.Services.services;
 using Dr_Home.UnitOfWork;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
 
 namespace Dr_Home.Helpers.helpers
@@ -48,6 +52,10 @@ namespace Dr_Home.Helpers.helpers
             services.AddDbContext<AppDbContext>(options => options.
            UseSqlServer(_configuration.GetConnectionString("host")),ServiceLifetime.Scoped);
 
+            //FluentValdition 
+            services.AddFluentValidationAutoValidation()
+                .AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
             //AuthHelper
             services.AddScoped<IAuthHelper, AuthHelper>();
             //Doctor Helper 
@@ -79,6 +87,10 @@ namespace Dr_Home.Helpers.helpers
             //Clinic Service 
 
             services.AddScoped<IClinicService, ClinicService>();
+
+            //File Manager Service 
+
+            services.AddScoped<IFileManager, FileManager>(); 
 
             //Jwt Token 
             var JwtOptions = _configuration.GetSection("Jwt").Get<jwtOptions>();
@@ -112,12 +124,16 @@ namespace Dr_Home.Helpers.helpers
             //Cors 
             app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
-            app.UseStaticFiles();
+           
             app.UseRouting();
 
             app.UseAuthorization();
 
             app.MapControllers();
+
+            app.UseStaticFiles();
+
+           // app.MapStaticAssets();
         }
     }
 }

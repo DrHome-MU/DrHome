@@ -69,26 +69,39 @@ namespace Dr_Home.Controllers
         /// Update Doctor Data
         [HttpPut("UpdateData")]
         [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> UpdateDoctorData(UpdateDoctorDto dto)
+        public async Task<IActionResult> UpdateDoctorData([FromForm] UpdateDoctorDto dto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid) { return BadRequest(new {success = false,
-                message="Unvalid Data!"}); }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Unvalid Data!"
+                });
+            }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if(userId == null)return Unauthorized(new {success = false , 
-                message = "Unauthorized User!"});
+
+            if (userId == null) return Unauthorized(new
+            {
+                success = false,
+                message = "Unauthorized User!"
+            });
 
             Guid id = Guid.Parse(userId);
 
-            var response = await _doctorHelper.UpdateDoctor(id, dto);
+            var response = await _doctorHelper.UpdateDoctor(id, dto, cancellationToken);
 
 
-            return (!response.Success) ? 
-                BadRequest(new { Success = false, Message = response.Message }):
-                Ok(new { Success = true , Message = response.Message , 
-                    doctorId = response.Data.Id });
-                
+            return (!response.Success) ?
+                BadRequest(new { Success = false, Message = response.Message }) :
+                Ok(new
+                {
+                    Success = true,
+                    Message = response.Message,
+                    doctorId = response.Data.Id
+                });
+
         }
 
 

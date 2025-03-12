@@ -10,12 +10,11 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<ApiResponse<Doctor>>DeleteDoctor(Guid id);
 
-        Task<ApiResponse<Doctor>>UpdateDoctor(Guid userId , UpdateDoctorDto dto);
+        Task<ApiResponse<Doctor>>UpdateDoctor(Guid userId , UpdateDoctorDto dto , 
+            CancellationToken cancellationToken);
 
         Task<ApiResponse<IEnumerable<Doctor>>> GetDoctors();
 
-        Task<string> UpdateDoctorPic(UpdatePictureDto dto);
-
-        Task  DeletePic(Guid id, string uploadPath);
+        
     }
 }
