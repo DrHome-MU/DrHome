@@ -3,31 +3,39 @@ using Dr_Home.DTOs.ReviewDtos;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.Services.Interfaces;
 using Dr_Home.UnitOfWork;
+using Mapster;
 
 namespace Dr_Home.Helpers.helpers
 {
     public class ReviewHelper(IUnitOfWork _unitOfWork) : IReviewHelper
     {
-        public async Task<ApiResponse<Review>> AddReview(Guid id, AddReviewDto dto)
+        public async Task<ApiResponse<GetReviewDto>> AddReview(AddReviewDto dto)
         {
-           
-            var review = new Review
-            {
-                PatientId = id,
-                DoctorId = dto.DoctorId,
-                Comment = dto.Comment,
-                rating = dto.Rating,
-                ReviewTime = DateTime.Now
-            };
+
+            var review = dto.Adapt<Review>();
+            review.ReviewTime = DateTime.Now;
+
+            var doctor = await _unitOfWork._doctorService.GetById(dto.DoctorId);
+
+            if (doctor == null)
+                return new ApiResponse<GetReviewDto>
+                {
+                    Success = false,
+                    Message = "Doctor Not Found"
+                };
 
             await _unitOfWork._reviewService.AddAsync(review);
-            await  _unitOfWork.Complete(); 
+            await _unitOfWork.Complete();
 
-            return new ApiResponse<Review>{
-                Success = true ,
-                Message = "Review Is Added Successfully", 
-                Data = review
-                
+            var res = await _unitOfWork._reviewService.GetReviewById(review.Id);
+
+            var result = res.Adapt<GetReviewDto>();
+
+            return new ApiResponse<GetReviewDto>
+            {
+                Success = true,
+                Message = "Review Is Added Successfully",
+                Data = result
             };
 
         }
@@ -45,15 +53,6 @@ namespace Dr_Home.Helpers.helpers
                 };
             }
 
-            if (review.patient.Id == id)
-            {
-                return new ApiResponse<Review>
-                {
-                    Success = false ,
-                    Message = "Unauthorized User"
-                };
-            }
-
             await _unitOfWork._reviewService.DeleteAsync(review);
             await _unitOfWork.Complete();
 
@@ -62,6 +61,30 @@ namespace Dr_Home.Helpers.helpers
                 Success = true,
                 Message = "Deleted Successfully."
             };
+        }
+
+        public async Task<ApiResponse<IEnumerable<GetReviewDto>>> GetAll()
+        {
+           var reviews = await _unitOfWork._reviewService.GetAll();
+
+           var result = reviews.Adapt<IEnumerable<GetReviewDto>>();
+
+            if (!result.Any())
+                return new ApiResponse<IEnumerable<GetReviewDto>>
+                {
+                    Success = false,
+                    Message = "There Is No Reviews",
+                    Data = result
+                };
+
+            return new ApiResponse<IEnumerable<GetReviewDto>>
+            {
+                Success = true,
+                Message = "Reviews Loaded Successfully",
+                Data = result
+            };
+
+
         }
 
         public async Task<ApiResponse<decimal>> GetDoctorAverageRating(Guid DoctorId)
@@ -92,15 +115,14 @@ namespace Dr_Home.Helpers.helpers
         public async Task<ApiResponse<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId)
         {
            var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
-
-            Console.WriteLine(reviews.Count()); 
+ 
            
             if(reviews == null || reviews.Count() == 0)
             {
                 return new ApiResponse<IEnumerable<GetReviewDto>>
                 {
                     Success = false,
-                    Message = "There Is No Reviews For this Doctor",
+                    Message = "There Is No Reviews For this Doctor"
                 };
             }
 
@@ -108,13 +130,8 @@ namespace Dr_Home.Helpers.helpers
 
             foreach(var review in reviews)
             {
-                var dto = new GetReviewDto
-                {
-                    ReviwerName = review.patient.FullName , 
-                    Comment = review.Comment, 
-                    rating = review.rating,
-                    ReviewTime = review.ReviewTime
-                };
+                var dto = review.Adapt<GetReviewDto>();
+                dto.ReviwerName = review.patient!.FullName;
                 result.Add(dto);
             }
 
@@ -136,7 +153,7 @@ namespace Dr_Home.Helpers.helpers
                 return new ApiResponse<IEnumerable<GetReviewDto>>
                 {
                     Success = false,
-                    Message = "This User didn`t Review any doctor",
+                    Message = "This User didn`t Review any doctor"
                 };
             }
 
@@ -144,13 +161,8 @@ namespace Dr_Home.Helpers.helpers
 
             foreach (var review in reviews)
             {
-                var dto = new GetReviewDto
-                {
-                    ReviwerName = review.patient.FullName,
-                    Comment = review.Comment,
-                    rating = review.rating,
-                    ReviewTime = review.ReviewTime
-                };
+                var dto = review.Adapt<GetReviewDto>();
+                dto.ReviwerName = review.patient!.FullName;
                 result.Add(dto);
             }
 
@@ -162,26 +174,24 @@ namespace Dr_Home.Helpers.helpers
             };
         }
 
-        public async  Task<ApiResponse<Review>> UpdateReview(Guid id, UpdateReviewDto dto)
+        public async  Task<ApiResponse<GetReviewDto>> UpdateReview(Guid ReviewId, UpdateReviewDto dto)
         {
-            var review = await _unitOfWork._reviewService.GetReviewById(dto.ReviewId);
+            var review = await _unitOfWork._reviewService.GetReviewById(ReviewId);
 
             if (review == null)
             {
-                return new ApiResponse<Review>
+                return new ApiResponse<GetReviewDto>
                 {
                     Success = false,
-                    Message = "Review Doesn`t Exist",
-                    Data = null
+                    Message = "Review Doesn`t Exist"
                 };
             }
 
-            if(review.patient.Id != id) {
-                return new ApiResponse<Review>
+            if(review.patient!.Id != dto.PatientId) {
+                return new ApiResponse<GetReviewDto>
                 {
                     Success = false,
-                    Message = "Unauthorized User",
-                    Data = null
+                    Message = "Unauthorized User"
                 };
                 }
 
@@ -191,11 +201,15 @@ namespace Dr_Home.Helpers.helpers
             await _unitOfWork._reviewService.UpdateAsync(review);
             await _unitOfWork.Complete();
 
-            return new ApiResponse<Review>
+            var result = review.Adapt<GetReviewDto>();
+
+            result.ReviwerName = review.patient.FullName;
+
+            return new ApiResponse<GetReviewDto>
             {
                 Success = true ,
                 Message = "Review Updated Successfully",
-                Data = review
+                Data = result
             };
         }
     }

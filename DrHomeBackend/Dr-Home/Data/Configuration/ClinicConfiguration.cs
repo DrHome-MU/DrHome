@@ -10,6 +10,8 @@ namespace Dr_Home.Data.Configuration
         {
             builder.ToTable("Clinics");
 
+          //  builder.HasIndex(x => new { x.ClinicName, x.city, x.region }).IsUnique();
+
             //One-To-Many (doctor & clinics)
             builder.HasOne(c => c.doctor)
                 .WithMany(d => d.clinics)

@@ -24,8 +24,8 @@ namespace Dr_Home.DTOs.AuthDTOs
         [MinLength(10)]
         public string Password { get; set; }
 
-        [Required]
-        [MinLength(10)]
+        [Compare("Password",
+            ErrorMessage = "Make sure that the confirmed password is equal to the password")]
         public string ConfirmPassword { get; set; }
         
         public DateOnly? DateOfBirth { get; set; }

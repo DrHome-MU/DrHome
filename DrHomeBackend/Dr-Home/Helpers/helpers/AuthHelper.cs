@@ -4,6 +4,7 @@ using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
+using Hangfire;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -74,7 +75,9 @@ namespace Dr_Home.Helpers.helpers
                 message = html_tmp
             };
 
-            await _sender.SendRegisterEmailAsync(sendDto);
+            BackgroundJob.Enqueue(() => _sender.SendRegisterEmailAsync(sendDto));
+
+            //await _sender.SendRegisterEmailAsync(sendDto);
             return new ApiResponse<Patient>
             {
                 Success = true,
@@ -112,7 +115,7 @@ namespace Dr_Home.Helpers.helpers
                 issuer: jwt.Issuer,
                 audience: jwt.Audience,
                 claims: authClaims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddYears(1),
                 signingCredentials: new SigningCredentials(key,
                 SecurityAlgorithms.HmacSha256)
             );

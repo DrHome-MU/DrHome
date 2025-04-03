@@ -2,10 +2,12 @@
 {
     public class AddReviewDto
     {
+        public Guid PatientId { get; set; }
+
         public Guid DoctorId { get; set; }
 
         public string? Comment { get; set; }
 
-        public int Rating { get; set; }
+        public int rating { get; set; }
     }
 }

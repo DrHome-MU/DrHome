@@ -6,8 +6,8 @@ namespace Dr_Home.Helpers.Interfaces
 {
     public interface IReviewHelper
     {
-        Task<ApiResponse<Review>> AddReview(Guid id, AddReviewDto dto);
-        Task<ApiResponse<Review>>UpdateReview(Guid id , UpdateReviewDto dto);
+        Task<ApiResponse<GetReviewDto>> AddReview(AddReviewDto dto);
+        Task<ApiResponse<GetReviewDto>>UpdateReview(Guid ReviewId , UpdateReviewDto dto);
 
         Task<ApiResponse<Review>> DeleteReview(Guid id);
 
@@ -16,5 +16,7 @@ namespace Dr_Home.Helpers.Interfaces
         Task<ApiResponse<IEnumerable<GetReviewDto>>>GetPatientReviews(Guid PatientId);
 
         Task<ApiResponse<Decimal>>GetDoctorAverageRating(Guid DoctorId);
+
+        Task<ApiResponse<IEnumerable<GetReviewDto>>> GetAll();
     }
 }

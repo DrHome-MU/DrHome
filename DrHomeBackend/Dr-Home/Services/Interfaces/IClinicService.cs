@@ -16,6 +16,8 @@ namespace Dr_Home.Services.Interfaces
 
         Task<Clinic>GetById(Guid id);   
 
+        Task<Clinic>GetClinicByNameAndCityAndRegion(string name , string city , string region);
+
 
         Task<Clinic>DeleteClinicAsync(Clinic clinic);
     }

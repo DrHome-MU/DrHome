@@ -15,6 +15,8 @@ namespace Dr_Home.Services.Interfaces
         Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId);
 
         Task<IEnumerable<Review>>GetPatientReviews(Guid PatientId);
+
+        Task<IEnumerable<Review>> GetAll();
         
     }
 }

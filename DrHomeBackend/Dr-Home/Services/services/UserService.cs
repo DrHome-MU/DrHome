@@ -26,7 +26,7 @@ namespace Dr_Home.Services.services
 
         public async Task<User> GetByEmail(string email)
         {
-            return db.Set<User>().Where(u=>u.Email == email).FirstOrDefault();
+            return await db.Set<User>().FirstOrDefaultAsync(x=>x.Email == email);
         }
 
         public async Task<User> GetById(Guid id)

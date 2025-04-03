@@ -12,16 +12,14 @@ namespace Dr_Home.Controllers
     public class ClinicsController(IClinicHelper _clinicHelper) : ControllerBase
     {
         /// Add Clinic 
-        [HttpPost("Add")]
+        [HttpPost("")]
         [Authorize(Roles = "Doctor")]
 
         public async Task<IActionResult> AddClinic(AddClinicDto dto)
         {
-            if (!ModelState.IsValid) { return BadRequest(new { Success = false, Message = ModelState }); }
-
             var response = await _clinicHelper.AddClinic(dto);
 
-            return (response.Success == true) ? Ok(new { response.Success, response.Message }) : NotFound(response);
+            return (response.Success == true) ? Ok(response) : BadRequest(response);
         }
 
         /// Get All Clinics
@@ -35,10 +33,10 @@ namespace Dr_Home.Controllers
             return (response.Success == true) ? Ok(response) : NotFound(response);
         }
         /// Get Doctor`s Clinics
-        [HttpGet("DoctorClinics")]
+        [HttpGet("{DoctorId}")]
         [Authorize]
 
-        public async Task<IActionResult> GetDoctorClinics(Guid DoctorId)
+        public async Task<IActionResult> GetDoctorClinics([FromRoute] Guid DoctorId)
         {
             var response = await _clinicHelper.GetDoctorClinics(DoctorId);
 
@@ -47,24 +45,12 @@ namespace Dr_Home.Controllers
 
         ///Update Clinic 
 
-        [HttpPut("Update")]
+        [HttpPut("{ClinicId}")]
         [Authorize(Roles = "Doctor")]
 
-        public async Task<IActionResult> UpdateClinic(UpdateClinicDto dto)
+        public async Task<IActionResult> UpdateClinic([FromRoute] Guid ClinicId , UpdateClinicDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = ModelState
-                });
-            }
-            var doctorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (doctorId == null) { return Unauthorized(new { Success = false, message = "Unauthorized User" }); }
-
-            var response = await _clinicHelper.UpdateDoctorClinic(Guid.Parse(doctorId), dto);
+            var response = await _clinicHelper.UpdateDoctorClinic(ClinicId, dto);
 
             if (response.Message == "Unauthorized") return Unauthorized(response);
 
@@ -74,10 +60,10 @@ namespace Dr_Home.Controllers
 
         /// Delete Clinic
 
-        [HttpDelete("DeleteClinic")]
+        [HttpDelete("{ClinicId}")]
         [Authorize(Roles = "Admin , Doctor")]
 
-        public async Task<IActionResult> DeleteClinic(Guid ClinicId)
+        public async Task<IActionResult> DeleteClinic([FromRoute]Guid ClinicId)
         {
             if (!ModelState.IsValid) { return BadRequest(new { Success = false, Message = ModelState }); }
 

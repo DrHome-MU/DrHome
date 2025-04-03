@@ -21,6 +21,12 @@ namespace Dr_Home.Services.services
             return review;
         }
 
+        public async Task<IEnumerable<Review>> GetAll()
+        {
+            var reviews = await db.Set<Review>().Include(r => r.patient).ToListAsync();   
+            return reviews;
+        }
+
         public async Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId)
         {
            var reviews = await db.Set<Review>().Include(r=>r.patient).

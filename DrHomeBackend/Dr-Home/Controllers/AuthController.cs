@@ -147,7 +147,7 @@ namespace Dr_Home.Controllers
         //Delete User By Id Endpoint
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        public async Task<IActionResult> DeleteUser([FromRoute]Guid id)
         {
             var response = await _auth.DeleteUser(id);
             

@@ -2,10 +2,9 @@
 {
     public class UpdatePictureDto
     {
-        public Guid Id { get; set; }
+        public Guid DoctorId { get; set; }
 
-        public IFormFile pic {  get; set; } 
+        public IFormFile? PersonalPic {  get; set; } 
 
-        public string ? uploadPath { get; set; }
     }
 }

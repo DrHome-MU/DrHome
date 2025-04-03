@@ -9,18 +9,16 @@ namespace Dr_Home.Data.Models
 
         public string? ProfilePic_Path { get; set; }
 
-        public decimal? ConsultationFee { get; set; }
 
+        public int SpecializationId { get; set; }
 
-        public decimal? MedicalVisitFee { get; set; }
-
-        public int? SpecializationId { get; set; }
-
-        public Specialization? _specialization {  get; set; }    
+        public Specialization _specialization { get; set; } = default!;
 
         public List<Review>? Reviews { get; set; }
 
         public List<Clinic> ? clinics { get; set; }
+
+        public List<Appointment>? _appointments { get; set; }
         
 
     }

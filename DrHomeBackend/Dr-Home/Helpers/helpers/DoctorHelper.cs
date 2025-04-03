@@ -3,81 +3,46 @@ using Dr_Home.DTOs.AuthDTOs;
 using Dr_Home.DTOs.DoctorDtos;
 using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
+using Dr_Home.Errors;
 using Dr_Home.File_Manager;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
+using Mapster;
 using System.Reflection.Metadata.Ecma335;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,IEmailSender _sender , IFileManager _fileManager) : IDoctorHelper
+    public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,
+        IFileManager _fileManager) : IDoctorHelper
     {
         
-        public async Task<ApiResponse<Doctor>> AddDoctor(AddDoctorDto dto)
+        public async Task<ApiResponse<GetDoctorDto>> AddDoctor(AddDoctorDto dto)
         {
             var hashPassword = _auth.HashPassword(dto.Password);
 
             if(await _unitOfWork._userService.IsEmailExists(dto.Email))
             {
-                return new ApiResponse<Doctor>
+                return new ApiResponse<GetDoctorDto>
                 {
                     Success = false,
                     Message = "Email is in use by another user",
                     Data = null
                 };
             }
-
-            var doctor = new Doctor
-            {
-                FullName = dto.FullName,
-                Gender = dto.Gender,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                city = dto.city,
-                region = dto.region,
-                HashPassword = hashPassword,
-                role = dto.role
-
-            };
+            var doctor = dto.Adapt<Doctor>();
+            doctor.HashPassword = hashPassword;
+            doctor.role = "Doctor";
 
             await _unitOfWork._doctorService.AddAsync(doctor);
             await _unitOfWork.Complete();
 
-            var tokenParameters = new CreateTokenDto
-            {
-                FullName = doctor.FullName,
-                Id = doctor.Id,
-                role = doctor.role,
-                Email = doctor.Email
-            };
+            var res = doctor.Adapt<GetDoctorDto>();
 
-            string token = await _auth.CreateJwtToken(tokenParameters);
-
-            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
-            string link = $"{appUrl}/api/auth/verify?token={token}";
-           
-
-            string html_tmp = $@"
-            <div>
-                <p>Click on the link below to verify your account</p>
-                <a href='{link}'>Verify</a>
-            </div>";
-
-
-            var sendDto = new SendEmailRegisterDto
-            {
-                toEmail = doctor.Email,
-                subject = "Dr Home Verfication",
-                message = html_tmp
-            };
-
-            await _sender.SendRegisterEmailAsync(sendDto);
-
-            return new ApiResponse<Doctor>
+            return new ApiResponse<GetDoctorDto>
             {
                 Success = true, 
                 Message = "The Doctor Added Successfully",
-                Data = doctor
+                Data = res
 
             };
         }
@@ -113,7 +78,7 @@ namespace Dr_Home.Helpers.helpers
 
         }
 
-        /// Delete Doctor Pic
+       
         
 
         /// Update Doctor Data
@@ -129,7 +94,7 @@ namespace Dr_Home.Helpers.helpers
              };
 
             if (dto.Email != doctor.Email && 
-                !await _unitOfWork._userService.IsEmailExists(dto.Email))
+                await _unitOfWork._userService.IsEmailExists(dto.Email))
             {
                 return new ApiResponse<Doctor>
                 {
@@ -139,18 +104,7 @@ namespace Dr_Home.Helpers.helpers
 
                 };
             }
-
-            if (dto.PersonalPic != null)
-
-                doctor.ProfilePic_Path = await _fileManager.Upload(dto.PersonalPic, cancellationToken);
-
-            else if (doctor.ProfilePic_Path != null)
-            {
-                await _fileManager.Delete(doctor.ProfilePic_Path);
-                doctor.ProfilePic_Path = null;
-            }
             
-
 
             //update the doctor details
             doctor.FullName = dto.FullName; 
@@ -161,11 +115,11 @@ namespace Dr_Home.Helpers.helpers
             doctor.region = dto.region;
             doctor.Email = dto.Email; 
             doctor.DateOfBirth = dto.DateOfBirth;
-            doctor.SpecializationId = dto.SpecilazationId;
+           
             
             //Update The Record in the database
             await _unitOfWork._doctorService.UpdateAsync(doctor);
-            await  _unitOfWork.Complete();
+            await  _unitOfWork.Complete(cancellationToken);
 
 
             return new ApiResponse<Doctor>
@@ -176,30 +130,64 @@ namespace Dr_Home.Helpers.helpers
             };
 
         }
-       
-        /// Update Doctor Pic
-       
+
+        public async Task<Result> UpdateDoctorProfilePicture(UpdatePictureDto dto, CancellationToken cancellationToken = default)
+        {
+            var doctor = await _unitOfWork._doctorService.GetById(dto.DoctorId);
+
+            if (doctor == null) return Result.Failure(DoctorErrors.DoctorNotFound);
+
+            if (dto.PersonalPic == null)
+            {
+                if (doctor.ProfilePic_Path != null) { await _fileManager.Delete(doctor.ProfilePic_Path); }
+                doctor.ProfilePic_Path = null;
+            }
+
+            else doctor.ProfilePic_Path = await _fileManager.Upload(dto.PersonalPic, cancellationToken);
+
+            await _unitOfWork.Complete(cancellationToken);
+
+            return Result.Success();
+        }
+
+
+
 
         /// Get All Doctors
-        public async Task<ApiResponse<IEnumerable<Doctor>>> GetDoctors()
+        public async Task<ApiResponse<IEnumerable<GetDoctorDto>>> GetDoctors()
         {
             var doctors = await _unitOfWork._doctorService.GetAllAsync();
 
             if (!doctors.Any())
             {
-                return new ApiResponse<IEnumerable<Doctor>>
+                return new ApiResponse<IEnumerable<GetDoctorDto>>
                 {
                     Success = false,
                     Message = "There Is No Doctors"
                 };
             }
+            var result = doctors.Adapt<IEnumerable<GetDoctorDto>>();
 
-            return new ApiResponse<IEnumerable<Doctor>>
+            return new ApiResponse<IEnumerable<GetDoctorDto>>
             {
                 Success = true,
                 Message = "Loading Doctors Done Successfully",
-                Data = doctors
+                Data = result
             };
+        }
+        ///Show Doctor Profile Data
+        public async Task<ApiResponse<ShowDoctorDataDto>> ShowDoctorData(Guid id)
+        {
+            var doctor = await _unitOfWork._doctorService.GetById(id);
+
+            if (doctor == null)
+                return new ApiResponse<ShowDoctorDataDto> { Success = false, Message = "Doctor Doesn`t Exist" };
+
+            var result = doctor.Adapt<ShowDoctorDataDto>();
+
+            if(doctor._specialization != null)result.specialization = doctor._specialization.Name;
+
+            return new ApiResponse<ShowDoctorDataDto> { Success = true, Message = "Done!", Data = result };
         }
 
        

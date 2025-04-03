@@ -31,6 +31,14 @@ namespace Dr_Home.Services.services
             return await db.Set<Clinic>().FindAsync(id);
         }
 
+        public async Task<Clinic> GetClinicByNameAndCityAndRegion(string name, string city, string region)
+        {
+            var clinic  = await db.Set<Clinic>().FirstOrDefaultAsync(x=>x.ClinicName == name 
+            && x.city == city && x.region == region);
+
+            return clinic; 
+        }
+
         public async Task<IEnumerable<Clinic>> GetDoctorClinicsAsync(Guid DoctorId)
         {
             var clinics = await db.Set<Clinic>().Where(c => c.DoctorId == DoctorId).ToListAsync();

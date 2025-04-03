@@ -25,7 +25,7 @@ namespace Dr_Home.Services.services
 
         public async Task<Doctor> GetById(Guid id)
         {
-            return await db.Set<Doctor>().FindAsync(id);
+            return await db.Set<Doctor>().Include(d => d._specialization).FirstOrDefaultAsync(x => x.Id == id);
         }
         public async Task<Doctor> UpdateAsync(Doctor entity)
         {
