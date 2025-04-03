@@ -15,6 +15,14 @@ namespace Dr_Home.UnitOfWork
         IReviewService _reviewService { get; }
 
         IClinicService _clinicalService { get; }
-        Task<int> Complete();
+
+        ISpecializationService _specializationService { get; }
+        IScheduleService _scheduleService { get; }
+        IAppointmentService _appointmentService { get; }
+
+        ICityService _cityService { get; }  
+
+        IRegionService _regionService { get; }
+        Task<int> Complete(CancellationToken cancellationToken = default);
     }
 }

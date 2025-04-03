@@ -2,7 +2,7 @@
 {
     public class UpdateReviewDto
     {
-        public Guid ReviewId { get; set; }
+       public Guid PatientId { get; set; }
 
         public string? Comment { get; set; }
 

@@ -13,8 +13,6 @@ namespace Dr_Home.DTOs.ClinicDtos
         public required string ClinicName { get; set; }
 
 
-        [MaxLength(11)]
-        [MinLength(11)]
         public string? PhoneNumber { get; set; }
 
     }

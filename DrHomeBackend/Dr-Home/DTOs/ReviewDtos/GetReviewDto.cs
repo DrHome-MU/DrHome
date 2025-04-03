@@ -2,6 +2,7 @@
 {
     public class GetReviewDto
     {
+        public Guid Id { get; set; }
         public string ReviwerName { get; set; }
 
         public string? Comment { get; set; }

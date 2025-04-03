@@ -6,16 +6,16 @@ namespace Dr_Home.Helpers.Interfaces
 {
     public interface IClinicHelper
     {
-        Task<ApiResponse<Clinic>> AddClinic(AddClinicDto dto);
+        Task<ApiResponse<ClinicResponseDto>> AddClinic(AddClinicDto dto);
 
 
-        Task<ApiResponse<IEnumerable<Clinic>>> GetDoctorClinics(Guid DoctorId);
+        Task<ApiResponse<IEnumerable<ClinicResponseDto>>> GetDoctorClinics(Guid DoctorId);
 
 
-        Task<ApiResponse<Clinic>> UpdateDoctorClinic(Guid DoctorId , UpdateClinicDto dto);
+        Task<ApiResponse<ClinicResponseDto>> UpdateDoctorClinic(Guid ClinicId , UpdateClinicDto dto);
 
 
-        Task<ApiResponse<IEnumerable<Clinic>>> GetAllClincs();
+        Task<ApiResponse<IEnumerable<ClinicResponseDto>>> GetAllClincs();
 
         Task<ApiResponse<Clinic>> DeleteClinic(Guid id);
     }

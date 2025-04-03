@@ -147,19 +147,20 @@ namespace Dr_Home.Controllers
         //Delete User By Id Endpoint
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        public async Task<IActionResult> DeleteUser([FromRoute]Guid id)
         {
             var response = await _auth.DeleteUser(id);
             
             return (response.Success) ? Ok(response) : NotFound(response);
         }
-        
-        
+
+
         [HttpGet("forgetpassword")]
         public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
         {
             var response = await _auth.ForgetPassword(dto);
-            return Ok("a7a");
+
+            return (response == "user doesn`t exist") ? NotFound(response) : Ok(response);
         }
     }
 }

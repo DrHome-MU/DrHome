@@ -4,6 +4,7 @@ using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
+using Hangfire;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -52,7 +53,8 @@ namespace Dr_Home.Helpers.helpers
             {
                 FullName = patient.FullName,
                 Id = patient.Id,
-                role = patient.role
+                role = patient.role,
+                Email = patient.Email
             };
 
             string token = await CreateJwtToken(tokenParameters);
@@ -73,7 +75,9 @@ namespace Dr_Home.Helpers.helpers
                 message = html_tmp
             };
 
-            await _sender.SendRegisterEmailAsync(sendDto);
+            BackgroundJob.Enqueue(() => _sender.SendRegisterEmailAsync(sendDto));
+
+            //await _sender.SendRegisterEmailAsync(sendDto);
             return new ApiResponse<Patient>
             {
                 Success = true,
@@ -99,8 +103,8 @@ namespace Dr_Home.Helpers.helpers
            {
                new Claim(ClaimTypes.NameIdentifier , parameters.Id.ToString()),
                new Claim(ClaimTypes.Name , parameters.FullName) ,
-               new Claim(ClaimTypes.Role,parameters.role)
-               // new Claim(ClaimTypes.Email,parameters.Email)
+               new Claim(ClaimTypes.Role,parameters.role),
+               new Claim(ClaimTypes.Email,parameters.Email)
            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
@@ -111,7 +115,7 @@ namespace Dr_Home.Helpers.helpers
                 issuer: jwt.Issuer,
                 audience: jwt.Audience,
                 claims: authClaims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddYears(1),
                 signingCredentials: new SigningCredentials(key,
                 SecurityAlgorithms.HmacSha256)
             );
@@ -179,7 +183,8 @@ namespace Dr_Home.Helpers.helpers
             {
                 Id = user.Id,
                 role = user.role,
-                FullName = user.FullName
+                FullName = user.FullName,
+                Email = user.Email
             };
             return new ApiResponse<User>
             {
@@ -380,12 +385,18 @@ namespace Dr_Home.Helpers.helpers
 
         public async Task<string> ForgetPassword(forgotPasswordDto dto)
         {
+            var user = await _unitOfWork._userService.GetByEmail(dto.Email);
+
+            if (user == null) { return "user doesn`t exist"; }
             var tokenParameters = new CreateTokenDto
             {
-                Email = dto.Email
+                Email = dto.Email,
+                FullName = user.FullName, 
+                role = user.role, 
+                Id =  user.Id
             };
             string token = await CreateJwtToken(tokenParameters);
-            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
+            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://dr-home.runasp.net";
             string link = $"{appUrl}/api/auth/ChangePassword?token={token}";
             string html_tmp = $@"
             <div>
@@ -402,7 +413,7 @@ namespace Dr_Home.Helpers.helpers
 
             await _sender.SendRegisterEmailAsync(sendDto);
 
-            return "a7a";
+            return token;
         }
     }
 }

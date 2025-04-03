@@ -12,35 +12,33 @@ namespace Dr_Home.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ReviewsController(IReviewHelper _reviewHelper, IUnitOfWork unitOfWork) : ControllerBase
+    public class ReviewsController(IReviewHelper _reviewHelper) : ControllerBase
     {
         //Add Review By Patient
-        [HttpPost("add")]
+        [HttpPost("")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> AddReview(AddReviewDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized(new { Success = false, message = "Unauthorized User" });
-            }
-
-            var response = await _reviewHelper.AddReview(Guid.Parse(userId), dto);
-
+            var response = await _reviewHelper.AddReview(dto);
 
             return (!response.Success) ? BadRequest(response) : Ok(response);
         }
+
+        //Get All Reviews 
+        [HttpGet("GetAll")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
+        {
+            var response = await _reviewHelper.GetAll();
+
+            return (response.Success) ? Ok(response) : NotFound(response);
+        }
+
         //Get Reviews For Specific Doctor
 
-        [HttpGet("GetReviews")]
+        [HttpGet("{DoctorId}")]
         
-        public async Task<IActionResult>GetReviews(Guid DoctorId)
+        public async Task<IActionResult>GetReviews([FromRoute] Guid DoctorId)
         {
             var response = await _reviewHelper.GetDoctorReviews(DoctorId);
 
@@ -49,7 +47,8 @@ namespace Dr_Home.Controllers
 
         //Get Reviews Done by Specific Patient
 
-        [HttpGet("patientReviews")]
+        [HttpGet("")]
+        [Authorize(Roles = "Patient")]
 
         public async Task<IActionResult>GetPatientReviews(Guid PatientId)
         {
@@ -58,12 +57,7 @@ namespace Dr_Home.Controllers
             return (!response.Success) ? NotFound(response) : Ok(response);
         }
 
-        //[HttpGet("")]
-        //public async Task<IActionResult>Get(Guid id)
-        //{
-        //    var review = await unitOfWork._reviewService.GetReview(id);
-        //    return Ok(new {patient = review.patient.FullName , doctor = review.doctor.FullName , review.Comment});
-        //}
+       
 
         //Get Average Rating Of  Doctor 
 
@@ -76,44 +70,19 @@ namespace Dr_Home.Controllers
         }
 
         //Update Review By Patient
-        [HttpPut("update")]
+        [HttpPut("{ReviewId}")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> UpdateReview(UpdateReviewDto dto)
+        public async Task<IActionResult> UpdateReview([FromRoute] Guid ReviewId ,  UpdateReviewDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var response = await _reviewHelper.UpdateReview(ReviewId, dto);
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(response.Message == "Unauthorized User")return Unauthorized(response);
 
-            if (userId == null)
-            {
-                return Unauthorized(new { Success = false, message = "Unauthorized User" });
-            }
-
-            var response = await _reviewHelper.UpdateReview(Guid.Parse(userId), dto);
-
-            return (!response.Success) ? BadRequest(response) :
-
-                Ok(new
-                {
-                    success = true,
-                    message = "Review Updated Successfully",
-                    Date = new
-                    {
-                        PatientName = response.Data.patient.FullName,
-                        Comment = response.Data.Comment,
-                        Date = response.Data.ReviewTime,
-                        rating = response.Data.rating
-                    },
-                    updateDate = DateTime.UtcNow
-
-                });
+            return (response.Success)? Ok(response) : NotFound(response);
         }
         //Delete Review By Patient Or Admin
 
-        [HttpDelete("delete")]
+        [HttpDelete("{id}")]
         [Authorize(Roles = ("Admin,Patient"))]
         public async Task<IActionResult> DeleteReview(Guid id)
         {

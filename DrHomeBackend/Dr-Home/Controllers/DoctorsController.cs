@@ -13,15 +13,10 @@ namespace Dr_Home.Controllers
     public class DoctorsController(IDoctorHelper _doctorHelper , IUnitOfWork unitOfWork) : ControllerBase
     {
         /// Add Doctor
-        [HttpPost("Add")]
+        [HttpPost("")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult>AddDoctor(AddDoctorDto dto)
         {
-            if (!ModelState.IsValid ) 
-            { return BadRequest(ModelState); }
-
-            if(dto.ConfirmPassword != dto.Password)
-            { return BadRequest("Make sure that the confirmed password is equal to the password"); }
 
             var response = await _doctorHelper.AddDoctor(dto);
 
@@ -42,60 +37,62 @@ namespace Dr_Home.Controllers
             return (response.Success == true) ? Ok(response) : NotFound(response);
         }
 
-
-        /// Test Image
-        [HttpGet("DoctorImage")]
+        [HttpGet("{id}")]
         [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> GetImage()
+
+        public async Task<IActionResult> ShowDoctorData([FromRoute]Guid id)
         {
-            var doctorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if(doctorId == null) { return BadRequest(); }
+            var response = await _doctorHelper.ShowDoctorData(id);
 
-            var doctor = await unitOfWork._doctorService.GetById(Guid.Parse(doctorId));
-
-            if (doctor == null) return NotFound();
-
-            var request = HttpContext.Request;
-
-            return Ok(new
-            {
-                Success = true,
-                img = doctor.ProfilePic_Path
-            });
-
+            return (response.Success == true) ? Ok(response) : NotFound(response);
 
 
         }
+
+
         /// Update Doctor Data
-        [HttpPut("UpdateData")]
+        [HttpPut("")]
         [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> UpdateDoctorData(UpdateDoctorDto dto)
+        public async Task<IActionResult> UpdateDoctorData([FromForm] UpdateDoctorDto dto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid) { return BadRequest(new {success = false,
-                message="Unvalid Data!"}); }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if(userId == null)return Unauthorized(new {success = false , 
-                message = "Unauthorized User!"});
+
+            if (userId == null) return Unauthorized(new
+            {
+                success = false,
+                message = "Unauthorized User!"
+            });
 
             Guid id = Guid.Parse(userId);
 
-            var response = await _doctorHelper.UpdateDoctor(id, dto);
+            var response = await _doctorHelper.UpdateDoctor(id, dto, cancellationToken);
 
 
-            return (!response.Success) ? 
-                BadRequest(new { Success = false, Message = response.Message }):
-                Ok(new { Success = true , Message = response.Message , 
-                    doctorId = response.Data.Id });
-                
+            return (!response.Success) ?
+                BadRequest(new { Success = false, Message = response.Message }) :
+                Ok(new
+                {
+                    Success = true,
+                    Message = response.Message,
+                    doctorId = response.Data.Id
+                });
+
+        }
+        [HttpPut("updatePicture")]
+        [Authorize(Roles = "Doctor")]
+
+        public async Task<IActionResult> UpdateDoctorProfilePicture([FromForm] UpdatePictureDto dto, CancellationToken cancellationToken) { 
+            var result = await _doctorHelper.UpdateDoctorProfilePicture(dto, cancellationToken);
+
+            return result.IsSuccess ? NoContent() : result.ToProblem(StatusCodes.Status404NotFound);
         }
 
 
 
         /// Delete Specific Doctor
 
-        [HttpDelete("Delete")]
+        [HttpDelete("")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteDoctor(Guid doctorId)
         {
