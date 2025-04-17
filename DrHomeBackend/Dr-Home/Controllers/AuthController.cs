@@ -18,6 +18,7 @@ namespace Dr_Home.Controllers
     [ApiController]
     public class AuthController(IAuthHelper _auth) : ControllerBase
     {
+        
         //Register Endpoint
         [HttpPost("register")]
         public async Task<IActionResult> register(RegisterDto dto)
@@ -44,6 +45,15 @@ namespace Dr_Home.Controllers
                 }
             );
         }
+        /// <summary>
+        /// Sing In Endpoint
+        /// </summary>
+        /// <param name="dto">
+        /// <br/>
+        /// -<b>Email</b>: Required , Follow The email format (test@example.com) <br/>
+        /// -<b>Password</b>:Required , At Least 10 Characters
+        /// </param>
+        /// <returns></returns>
 
         //Login Endpoint
         [HttpPost("login")]

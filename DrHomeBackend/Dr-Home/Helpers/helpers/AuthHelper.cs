@@ -1,4 +1,5 @@
-﻿using Dr_Home.Data.Models;
+﻿using Dr_Home.Authentication;
+using Dr_Home.Data.Models;
 using Dr_Home.DTOs.AuthDTOs;
 using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
@@ -15,8 +16,11 @@ using System.Text;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class AuthHelper(IUnitOfWork _unitOfWork , jwtOptions jwt,IEmailSender _sender) : IAuthHelper
+    public class AuthHelper(IUnitOfWork _unitOfWork , jwtOptions jwt,IEmailSender _sender
+        ,IJwtProvider jwtProvider) : IAuthHelper
     {
+        private readonly IJwtProvider _jwtProvider = jwtProvider;
+
         public async Task<ApiResponse<Patient>> RegisterPatient(RegisterDto dto)
         {
            
@@ -49,15 +53,8 @@ namespace Dr_Home.Helpers.helpers
               await _unitOfWork._patientService.AddAsync(patient);
               await  _unitOfWork.Complete();
 
-            var tokenParameters = new CreateTokenDto
-            {
-                FullName = patient.FullName,
-                Id = patient.Id,
-                role = patient.role,
-                Email = patient.Email
-            };
 
-            string token = await CreateJwtToken(tokenParameters);
+            string token =  _jwtProvider.GenerateToken(patient);
             string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
             string link = $"{appUrl}/api/auth/verify?token={token}";
 
@@ -97,56 +94,6 @@ namespace Dr_Home.Helpers.helpers
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
 
-        public async Task<string> CreateJwtToken(CreateTokenDto parameters)
-        {
-            var authClaims = new Claim[]
-           {
-               new Claim(ClaimTypes.NameIdentifier , parameters.Id.ToString()),
-               new Claim(ClaimTypes.Name , parameters.FullName) ,
-               new Claim(ClaimTypes.Role,parameters.role),
-               new Claim(ClaimTypes.Email,parameters.Email)
-           };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
-
-
-            var token = new JwtSecurityToken
-            (
-                issuer: jwt.Issuer,
-                audience: jwt.Audience,
-                claims: authClaims,
-                expires: DateTime.UtcNow.AddYears(1),
-                signingCredentials: new SigningCredentials(key,
-                SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public async Task<string> GenerateRefreshToken()
-        {
-            var randomNumber = new byte[64];
-
-            using var generator = RandomNumberGenerator.Create();
-
-            generator.GetBytes(randomNumber);
-
-            return Convert.ToBase64String(randomNumber);
-        }
-
-        public async Task<ClaimsPrincipal?> GetPrincipleFromExpiredToken(string token)
-        {
-            var key = Encoding.UTF8.GetBytes(jwt.Key);//the key of our jwt token
-            var validition = new TokenValidationParameters
-            {
-                ValidIssuer = jwt.Issuer,
-                ValidAudience = jwt.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateLifetime = false // we must make it false because will compare with expired token
-            };
-
-            return new JwtSecurityTokenHandler().ValidateToken(token, validition, out _);
-        }
 
         public async Task<ApiResponse<User>> LogIn(LogInDto dto)
         {
@@ -179,18 +126,12 @@ namespace Dr_Home.Helpers.helpers
            //         Data = null
            //     };
            // }
-            var tokenParams = new CreateTokenDto
-            {
-                Id = user.Id,
-                role = user.role,
-                FullName = user.FullName,
-                Email = user.Email
-            };
+          
             return new ApiResponse<User>
             {
                 Success = true,
                 Message = "User Signed In Successfully",
-                token = await CreateJwtToken(tokenParams),
+                token = _jwtProvider.GenerateToken(user),
                 Data = user
             };
         }
@@ -388,14 +329,8 @@ namespace Dr_Home.Helpers.helpers
             var user = await _unitOfWork._userService.GetByEmail(dto.Email);
 
             if (user == null) { return "user doesn`t exist"; }
-            var tokenParameters = new CreateTokenDto
-            {
-                Email = dto.Email,
-                FullName = user.FullName, 
-                role = user.role, 
-                Id =  user.Id
-            };
-            string token = await CreateJwtToken(tokenParameters);
+          
+            string token = _jwtProvider.GenerateToken(user);
             string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://dr-home.runasp.net";
             string link = $"{appUrl}/api/auth/ChangePassword?token={token}";
             string html_tmp = $@"

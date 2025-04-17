@@ -85,7 +85,7 @@ namespace Dr_Home.Controllers
         public async Task<IActionResult> UpdateDoctorProfilePicture([FromForm] UpdatePictureDto dto, CancellationToken cancellationToken) { 
             var result = await _doctorHelper.UpdateDoctorProfilePicture(dto, cancellationToken);
 
-            return result.IsSuccess ? NoContent() : result.ToProblem(StatusCodes.Status404NotFound);
+            return result.IsSuccess ? NoContent() : result.ToProblem();
         }
 
 

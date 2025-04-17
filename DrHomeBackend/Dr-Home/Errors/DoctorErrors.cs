@@ -2,7 +2,8 @@
 {
     public static class DoctorErrors
     {
-        public static Error DoctorNotFound = new("Doctor.NotFound", "Doctor Was Not Found With This Id");
+        public static Error DoctorNotFound = new("Doctor.NotFound", "Doctor Was Not Found With This Id", 
+            StatusCodes.Status404NotFound);
 
     }
 }

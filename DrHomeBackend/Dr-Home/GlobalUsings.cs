@@ -1,4 +1,5 @@
 ﻿global using Microsoft.EntityFrameworkCore;
+global using System.ComponentModel.DataAnnotations;
 global using Dr_Home.Services.Interfaces;
 global using Dr_Home.Helpers.Interfaces; 
 global using Dr_Home.Data.Models; 

@@ -21,7 +21,7 @@ namespace Dr_Home.Services.services
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            return await db.Set<User>().ToListAsync();
+            return await db.Set<User>().Where(x => x.role == "Patient").ToListAsync();
         }
 
         public async Task<User> GetByEmail(string email)

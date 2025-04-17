@@ -15,13 +15,13 @@ namespace Dr_Home.Data.Configuration
             builder.HasOne(a=>a._schedule)
                 .WithMany(s=>s._appointments)
                 .HasForeignKey(a=>a.ScheduleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             //Appointment & Patient
             builder.HasOne(a => a._patient)
                .WithMany(p => p._appointments)
                .HasForeignKey(a => a.PatientId)
-               .OnDelete(DeleteBehavior.NoAction);
+               .OnDelete(DeleteBehavior.Restrict);
 
 
             //Appointment & Doctor
@@ -29,7 +29,7 @@ namespace Dr_Home.Data.Configuration
             builder.HasOne(a => a._doctor)
                .WithMany(d => d._appointments)
                .HasForeignKey(a => a.DoctorId)
-               .OnDelete(DeleteBehavior.NoAction);
+               .OnDelete(DeleteBehavior.Restrict);
 
 
         }
