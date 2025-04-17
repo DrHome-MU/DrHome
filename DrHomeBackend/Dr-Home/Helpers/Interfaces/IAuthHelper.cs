@@ -12,12 +12,7 @@ namespace Dr_Home.Helpers.Interfaces
         string HashPassword(string password);
 
         bool VerifyPassword(string password, string hashedPassword);
-
-        Task<string>CreateJwtToken(CreateTokenDto dto);
-
-        Task<string> GenerateRefreshToken();
-
-        Task<ClaimsPrincipal?> GetPrincipleFromExpiredToken(string token);
+       
 
         Task<ApiResponse<User>> LogIn(LogInDto dto);
 

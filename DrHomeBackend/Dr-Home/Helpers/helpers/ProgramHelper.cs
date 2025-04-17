@@ -1,5 +1,5 @@
-﻿using Dr_Home.Data;
-using Dr_Home.DTOs.AuthDTOs;
+﻿using Dr_Home.Authentication;
+using Dr_Home.Data;
 using Dr_Home.Email_Sender;
 using Dr_Home.Errors;
 using Dr_Home.File_Manager;
@@ -18,8 +18,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -48,7 +50,10 @@ namespace Dr_Home.Helpers.helpers
             //});
 
             services.AddOpenApi();
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(options => {
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            });
 
             //Add Cors 
             services.AddCors();
@@ -140,11 +145,19 @@ namespace Dr_Home.Helpers.helpers
             //Region Heleper
 
             services.AddScoped<IRegionHelper, RegionHelepr>();
-            
 
-            //Jwt Token 
-            var JwtOptions = _configuration.GetSection("Jwt").Get<jwtOptions>();
-            services.AddSingleton(JwtOptions);
+            services.AddScoped<IJwtProvider , JwtProvider>();
+
+
+            //services.Configure<jwtOptions>(_configuration.GetSection(jwtOptions.SectionName));
+            services.AddOptions<jwtOptions>()
+           .BindConfiguration(jwtOptions.SectionName)
+           .ValidateDataAnnotations()
+           .ValidateOnStart();
+
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<jwtOptions>>().Value);
+            //get the section jwt and bind it to JwtOptions Class 
+            var jwtSettings = _configuration.GetSection(jwtOptions.SectionName).Get<jwtOptions>();
 
             services.AddAuthentication()
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -153,13 +166,13 @@ namespace Dr_Home.Helpers.helpers
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         // ValidateIssuer = true,
-                        ValidIssuer = JwtOptions.Issuer,
+                        ValidIssuer = jwtSettings!.Issuer,
                         // ValidateAudience = true,
-                        ValidAudience = JwtOptions.Audience,
+                        ValidAudience = jwtSettings.Audience,
                         // ValidateLifetime = true,
                         //  RequireExpirationTime = true,
                         // ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtOptions.Key)),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
                       
                     };
                 });

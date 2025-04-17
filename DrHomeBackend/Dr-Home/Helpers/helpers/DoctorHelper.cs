@@ -137,9 +137,11 @@ namespace Dr_Home.Helpers.helpers
 
             if (doctor == null) return Result.Failure(DoctorErrors.DoctorNotFound);
 
+            if (doctor.ProfilePic_Path != null) { await _fileManager.Delete(doctor.ProfilePic_Path); }
+
             if (dto.PersonalPic == null)
             {
-                if (doctor.ProfilePic_Path != null) { await _fileManager.Delete(doctor.ProfilePic_Path); }
+
                 doctor.ProfilePic_Path = null;
             }
 
