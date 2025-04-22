@@ -29,7 +29,7 @@ namespace Dr_Home.Controllers
         ///Get All Doctors 
 
         [HttpGet("")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
 
         public async Task<IActionResult> GetAllDoctors()
         {
