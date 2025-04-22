@@ -9,7 +9,9 @@ namespace Dr_Home.Data.Models
 
         public TimeOnly AppointmentTime {  get; set; }
 
-        public string? AppointmentMethod { get; set; }
+        public string PatientName { get; set; } = string.Empty;
+
+        public string PatientPhoneNumber {  get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true; 
 

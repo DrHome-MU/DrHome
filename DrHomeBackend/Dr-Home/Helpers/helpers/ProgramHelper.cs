@@ -1,4 +1,5 @@
 ﻿using Dr_Home.Authentication;
+using Dr_Home.BackgroundJobs;
 using Dr_Home.Data;
 using Dr_Home.Email_Sender;
 using Dr_Home.Errors;
@@ -61,6 +62,8 @@ namespace Dr_Home.Helpers.helpers
             //Hangfire 
             services.AddHangfire(config => config.
             UseSqlServerStorage(_configuration.GetConnectionString("host")));
+
+            services.AddHangfireServer();
 
             //Add Mapster
             var mappingConfig = TypeAdapterConfig.GlobalSettings;
@@ -130,6 +133,10 @@ namespace Dr_Home.Helpers.helpers
 
             services.AddScoped<IScheduleService, ScheduleService>();
 
+            //Schedule Helper 
+
+            services.AddScoped<IScheduleHelper , ScheduleHelper>();
+
             //Appointment Service 
 
             services.AddScoped<IAppointmentService, AppointmentService>();
@@ -145,6 +152,12 @@ namespace Dr_Home.Helpers.helpers
             //Region Heleper
 
             services.AddScoped<IRegionHelper, RegionHelepr>();
+            //ManageSchedules 
+            services.AddScoped<IManageSchedules, ManageSchedules>();
+
+            //Appointment Helper
+            services.AddScoped<IAppointmentHelper, AppointmentHelper>();
+
 
             services.AddScoped<IJwtProvider , JwtProvider>();
 
@@ -207,7 +220,10 @@ namespace Dr_Home.Helpers.helpers
             //Cors 
             app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
-            app.UseHangfireDashboard("/jobs");
+            app.UseHangfireDashboard("/jobs", new DashboardOptions
+            {
+                Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+            });
             //app.UseMiddleware<ExceptionHandlerMiddleware>();
             app.UseExceptionHandler();
 

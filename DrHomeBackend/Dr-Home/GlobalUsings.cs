@@ -11,4 +11,7 @@ global using Microsoft.AspNetCore.Mvc;
 global using Dr_Home.Helpers.helpers;
 global using Dr_Home.Abstractions;
 global using Newtonsoft.Json.Linq; 
-
+global using FluentValidation;
+global using Dr_Home.DTOs.SchedulesDTOs;
+global using Dr_Home.UnitOfWork;
+global using  Dr_Home.Errors;
