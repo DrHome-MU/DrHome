@@ -1,4 +1,6 @@
+using Dr_Home.BackgroundJobs;
 using Dr_Home.Helpers.helpers;
+using Hangfire;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,9 +24,17 @@ var app = builder.Build();
     app.UseSwaggerUI();
     app.MapOpenApi();
 
+
+
 app.UseSerilogRequestLogging();
 
 startUp.Configure(app);
 
+var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+using var scope = scopeFactory.CreateScope();
+
+var manageSchedulesService = scope.ServiceProvider.GetRequiredService<IManageSchedules>();
+
+RecurringJob.AddOrUpdate("", () => manageSchedulesService.DeleteExpiredSchedules(), Cron.Daily);
 
 app.Run();

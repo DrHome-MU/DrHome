@@ -10,6 +10,10 @@ namespace Dr_Home.Data.Configuration
         {
             builder.ToTable("Appointments");
 
+            builder.Property(x => x.PatientName).HasMaxLength(100); 
+
+            builder.Property(x => x.PatientPhoneNumber).HasMaxLength(100);
+
             //Appointment & Schedule
 
             builder.HasOne(a=>a._schedule)
