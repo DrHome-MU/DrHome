@@ -38,9 +38,9 @@ namespace Dr_Home.Controllers
                 {
                     Success = response.Success,
                     message = response.Message,
-                    userId = response.Data.Id,
-                    role = response.Data.role,
-                    email = response.Data.Email
+                    userId = response.Data?.Id,
+                    role = response.Data?.role,
+                    email = response.Data?.Email
 
                 }
             );

@@ -10,7 +10,7 @@ namespace Dr_Home.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DoctorsController(IDoctorHelper _doctorHelper , IUnitOfWork unitOfWork) : ControllerBase
+    public class DoctorsController(IDoctorHelper _doctorHelper) : ControllerBase
     {
         /// Add Doctor
         [HttpPost("")]
@@ -29,7 +29,7 @@ namespace Dr_Home.Controllers
         ///Get All Doctors 
 
         [HttpGet("")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
 
         public async Task<IActionResult> GetAllDoctors()
         {
@@ -47,6 +47,28 @@ namespace Dr_Home.Controllers
             return (response.Success == true) ? Ok(response) : NotFound(response);
 
 
+        }
+        /// <summary>
+        /// Filter Doctor By FullName,city,region,specializationId
+        /// </summary>
+        /// <param name="filter">
+        /// <br/>
+        /// <para>كل القيم ممكن تتبعت او تتساب فاضية </para><br/>
+        /// <b>FullName</b>: Must be at most 100 character
+        /// 
+        /// </param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "200" >ممكن يرجعلك فيمة او ممكن تبقى قيمة فاضية</response>
+
+        [HttpGet("FilterDoctors")]
+        [Authorize]
+        [ProducesResponseType(typeof(IEnumerable<GetDoctorDto>), 200)]
+        public async Task<IActionResult> FilterDoctors(DoctorFilterDto filter , CancellationToken cancellationToken)
+        {
+            var result = await _doctorHelper.FilterDoctors(filter , cancellationToken); 
+
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
 
 

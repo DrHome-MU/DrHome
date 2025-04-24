@@ -192,6 +192,11 @@ namespace Dr_Home.Helpers.helpers
             return new ApiResponse<ShowDoctorDataDto> { Success = true, Message = "Done!", Data = result };
         }
 
-       
+        public async Task<Result<IEnumerable<GetDoctorDto>>> FilterDoctors(DoctorFilterDto doctorFilterDto, CancellationToken cancellationToken = default)
+        {
+            var doctors = await _unitOfWork._doctorService.FilterDoctorAsync(doctorFilterDto, cancellationToken);
+
+            return Result.Success(doctors);
+        }
     }
 }
