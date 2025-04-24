@@ -21,6 +21,8 @@ namespace Dr_Home.Helpers.Interfaces
         Task<ApiResponse<IEnumerable<GetDoctorDto>>> GetDoctors();
 
         Task<ApiResponse<ShowDoctorDataDto>> ShowDoctorData(Guid id);
+
+        Task<Result<IEnumerable<GetDoctorDto>>>FilterDoctors(DoctorFilterDto doctorFilterDto , CancellationToken cancellationToken = default);
        
 
 
