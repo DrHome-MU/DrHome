@@ -22,7 +22,7 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<ApiResponse<ShowDoctorDataDto>> ShowDoctorData(Guid id);
 
-        Task<Result<IEnumerable<GetDoctorDto>>>FilterDoctors(DoctorFilterDto doctorFilterDto , CancellationToken cancellationToken = default);
+        Task<Result<IEnumerable<GetDoctorDtoV2>>>FilterDoctors(DoctorFilterDto doctorFilterDto , CancellationToken cancellationToken = default);
        
 
 

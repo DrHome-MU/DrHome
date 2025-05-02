@@ -34,6 +34,8 @@ namespace Dr_Home.Services.services
             return await db.Set<User>().FindAsync(id);
         }
 
+        
+
         public async Task<bool> IsEmailExists(string email)
         {
            return  await db.Set<User>().AnyAsync(u => u.Email == email);

@@ -7,8 +7,8 @@ namespace Dr_Home.DTOs.ReviewDtos.Validators
         public UpdateReviewValidator()
         {
             RuleFor(x => x.rating)
-              .Must((request, context) => request.rating >= 1 && request.rating <= 5)
-              .WithMessage("Rating Must In Range Between 1 And 5");
+              .Must((request, context) => request.rating >= 0 && request.rating <= 5)
+              .WithMessage("Rating Must In Range Between 0 And 5");
         }
     }
 }

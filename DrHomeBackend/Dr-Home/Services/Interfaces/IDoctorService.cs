@@ -14,6 +14,6 @@ namespace Dr_Home.Services.Interfaces
         Task<Doctor> UpdateAsync(Doctor entity);
         Task<Doctor> DeleteAsync(Doctor entity);
 
-        Task<IEnumerable<GetDoctorDto>> FilterDoctorAsync(DoctorFilterDto filter , CancellationToken cancellationToken = default);
+        Task<IEnumerable<GetDoctorDtoV2>> FilterDoctorAsync(DoctorFilterDto filter , CancellationToken cancellationToken = default);
     }
 }

@@ -16,7 +16,7 @@ using System.Text;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class AuthHelper(IUnitOfWork _unitOfWork , jwtOptions jwt,IEmailSender _sender
+    public class AuthHelper(IUnitOfWork _unitOfWork ,IEmailSender _sender
         ,IJwtProvider jwtProvider) : IAuthHelper
     {
         private readonly IJwtProvider _jwtProvider = jwtProvider;
@@ -183,11 +183,20 @@ namespace Dr_Home.Helpers.helpers
 
             if (user.role == "Patient")
             {
-                var reviews = await _unitOfWork._reviewService.GetPatientReviews(user.Id);
+                var patient = await _unitOfWork._patientService.GetById(user.Id);
+                
+                var reviews = patient.Reviews;
+                var appointments = patient._appointments;
 
-                foreach (var review in reviews)
+                foreach (var review in reviews!)
                 {
                     await _unitOfWork._reviewService.DeleteAsync(review);
+                }
+
+                foreach(var appointment in appointments!)
+                {
+                    appointment.IsActive = false;
+                    appointment.PatientId = null;
                 }
               await  _unitOfWork.Complete();
             }

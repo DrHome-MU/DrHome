@@ -1,10 +1,10 @@
 ﻿namespace Dr_Home.DTOs.DoctorDtos
 {
-    public class GetDoctorDto
+    public class GetDoctorDtoV2
     {
         public Guid Id { get; set; }
 
-        public string FullName { get; set; }  = string.Empty;
+        public string FullName { get; set; } = string.Empty;
 
 
         public string Gender { get; set; } = string.Empty;
@@ -17,7 +17,7 @@
 
         public string? ProfilePic_Path { get; set; }
 
-        public int? SpecializationId { get; set; }
+        public string specialization { get; set; } = string.Empty ;
 
         public string? Summary { get; set; }
 

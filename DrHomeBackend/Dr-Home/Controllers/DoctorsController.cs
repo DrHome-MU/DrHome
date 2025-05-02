@@ -61,10 +61,10 @@ namespace Dr_Home.Controllers
         /// <returns></returns>
         /// <response code = "200" >ممكن يرجعلك فيمة او ممكن تبقى قيمة فاضية</response>
 
-        [HttpGet("FilterDoctors")]
+        [HttpPost("FilterDoctors")]
         [Authorize]
         [ProducesResponseType(typeof(IEnumerable<GetDoctorDto>), 200)]
-        public async Task<IActionResult> FilterDoctors(DoctorFilterDto filter , CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterDoctors([FromBody]DoctorFilterDto filter , CancellationToken cancellationToken)
         {
             var result = await _doctorHelper.FilterDoctors(filter , cancellationToken); 
 

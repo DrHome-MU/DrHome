@@ -6,17 +6,16 @@ namespace Dr_Home.Helpers.Interfaces
 {
     public interface IReviewHelper
     {
-        Task<ApiResponse<GetReviewDto>> AddReview(AddReviewDto dto);
-        Task<ApiResponse<GetReviewDto>>UpdateReview(Guid ReviewId , UpdateReviewDto dto);
+        Task<Result<GetReviewDto>> AddReview(AddReviewDto dto , CancellationToken cancellationToken = default);
+        Task<Result>UpdateReview(Guid ReviewId , UpdateReviewDto dto , CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<Review>> DeleteReview(Guid id);
+        Task<Result> DeleteReview(Guid id , CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId);
+        Task<Result<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId , CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<GetReviewDto>>>GetPatientReviews(Guid PatientId);
+       
 
-        Task<ApiResponse<Decimal>>GetDoctorAverageRating(Guid DoctorId);
+        Task<Result<GetAverageReviewDto>>GetDoctorAverageRating(Guid DoctorId , CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<GetReviewDto>>> GetAll();
     }
 }

@@ -9,122 +9,84 @@ namespace Dr_Home.Helpers.helpers
 {
     public class ReviewHelper(IUnitOfWork _unitOfWork) : IReviewHelper
     {
-        public async Task<ApiResponse<GetReviewDto>> AddReview(AddReviewDto dto)
+        public async Task<Result<GetReviewDto>> AddReview(AddReviewDto dto , CancellationToken cancellationToken = default)
         {
+
+            var doctor = await _unitOfWork._doctorService.GetById(dto.DoctorId);
+            var patient = await _unitOfWork._patientService.GetById(dto.PatientId);
+
+            if (doctor == null)
+                return Result.Failure<GetReviewDto>(DoctorErrors.DoctorNotFound);
+
+            if(patient == null)
+                return Result.Failure<GetReviewDto>(PatientErrors.PatientNotFound);
+
+            var isPatientGiveReviewBefore = await _unitOfWork._reviewService.IsPatientReviewedBefore(dto.PatientId,dto.DoctorId);
+
+            if(isPatientGiveReviewBefore)
+                return Result.Failure<GetReviewDto>(ReviewErrors.PatientMadeReviewBefore);
 
             var review = dto.Adapt<Review>();
             review.ReviewTime = DateTime.Now;
 
-            var doctor = await _unitOfWork._doctorService.GetById(dto.DoctorId);
-
-            if (doctor == null)
-                return new ApiResponse<GetReviewDto>
-                {
-                    Success = false,
-                    Message = "Doctor Not Found"
-                };
-
             await _unitOfWork._reviewService.AddAsync(review);
             await _unitOfWork.Complete();
 
-            var res = await _unitOfWork._reviewService.GetReviewById(review.Id);
 
-            var result = res.Adapt<GetReviewDto>();
+            var result = review.Adapt<GetReviewDto>();
+            result.ReviwerName = patient.FullName;
 
-            return new ApiResponse<GetReviewDto>
-            {
-                Success = true,
-                Message = "Review Is Added Successfully",
-                Data = result
-            };
+            return Result.Success<GetReviewDto>(result);
 
         }
 
-        public async Task<ApiResponse<Review>> DeleteReview(Guid id)
+        public async Task<Result> DeleteReview(Guid id , CancellationToken cancellationToken = default)
         {
             var review = await _unitOfWork._reviewService.GetReviewById(id);
 
             if (review == null)
-            {
-                return new ApiResponse<Review>
-                {
-                    Success = false ,
-                    Message = "Review Already Removed"
-                };
-            }
+            return Result.Failure(ReviewErrors.ReviewNotFound);
 
             await _unitOfWork._reviewService.DeleteAsync(review);
-            await _unitOfWork.Complete();
+            await _unitOfWork.Complete(cancellationToken);
 
-            return new ApiResponse<Review>
-            {
-                Success = true,
-                Message = "Deleted Successfully."
-            };
+            return Result.Success();
         }
 
-        public async Task<ApiResponse<IEnumerable<GetReviewDto>>> GetAll()
+
+
+        public async Task<Result<GetAverageReviewDto>> GetDoctorAverageRating(Guid DoctorId , CancellationToken cancellationToken = default)
         {
-           var reviews = await _unitOfWork._reviewService.GetAll();
+            var doctor = await _unitOfWork._doctorService.GetById(DoctorId);
 
-           var result = reviews.Adapt<IEnumerable<GetReviewDto>>();
+            if (doctor == null)
+                return Result.Failure<GetAverageReviewDto>(DoctorErrors.DoctorNotFound);
 
-            if (!result.Any())
-                return new ApiResponse<IEnumerable<GetReviewDto>>
-                {
-                    Success = false,
-                    Message = "There Is No Reviews",
-                    Data = result
-                };
+            var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
 
-            return new ApiResponse<IEnumerable<GetReviewDto>>
-            {
-                Success = true,
-                Message = "Reviews Loaded Successfully",
-                Data = result
-            };
-
-
-        }
-
-        public async Task<ApiResponse<decimal>> GetDoctorAverageRating(Guid DoctorId)
-        {
-           var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
-
-            if(reviews == null)
-            {
-                return new ApiResponse<decimal> { Success = false, Message = "There Is No Reviews" };
-
-            }
-
+            
             var sumRating = reviews.Sum(r => r.rating);
 
             int reviewsCount = reviews.Count();
 
-            decimal averageRating = (decimal) sumRating / reviewsCount;
+            if (reviewsCount == 0) 
+                return Result.Success(new GetAverageReviewDto { DoctorHasReviewes = false , rating = (decimal)reviewsCount}); 
 
-            return new ApiResponse<decimal>
-            {
-                Success = true,
-                Message = "Average Rating Calculated Successfully",
-                Data = averageRating
-            };
+            decimal averageRating = (decimal)sumRating / reviewsCount;
+
+            return Result.Success(new GetAverageReviewDto { DoctorHasReviewes = true , rating = averageRating});
 
         }
 
-        public async Task<ApiResponse<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId)
+        public async Task<Result<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId , CancellationToken cancellationToken = default)
         {
-           var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
+            var doctor = await _unitOfWork._doctorService.GetById(DoctorId); 
+
+            if(doctor == null)
+                return Result.Failure<IEnumerable<GetReviewDto>>(DoctorErrors.DoctorNotFound);
+
+            var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
  
-           
-            if(reviews == null || reviews.Count() == 0)
-            {
-                return new ApiResponse<IEnumerable<GetReviewDto>>
-                {
-                    Success = false,
-                    Message = "There Is No Reviews For this Doctor"
-                };
-            }
 
             List<GetReviewDto> result = new List<GetReviewDto>();
 
@@ -135,82 +97,28 @@ namespace Dr_Home.Helpers.helpers
                 result.Add(dto);
             }
 
-            return new ApiResponse<IEnumerable<GetReviewDto>>
-            {
-                Success = true,
-                Message = "Loading Reviews Is Done Successfully",
-                Data = result
-            };
+            return Result.Success<IEnumerable<GetReviewDto>>(result);
 
         }
 
-        public async Task<ApiResponse<IEnumerable<GetReviewDto>>> GetPatientReviews(Guid PatientId)
-        {
-            var reviews = await _unitOfWork._reviewService.GetPatientReviews(PatientId);
-
-            if (reviews == null || reviews.Count() == 0)
-            {
-                return new ApiResponse<IEnumerable<GetReviewDto>>
-                {
-                    Success = false,
-                    Message = "This User didn`t Review any doctor"
-                };
-            }
-
-            List<GetReviewDto> result = new List<GetReviewDto>();
-
-            foreach (var review in reviews)
-            {
-                var dto = review.Adapt<GetReviewDto>();
-                dto.ReviwerName = review.patient!.FullName;
-                result.Add(dto);
-            }
-
-            return new ApiResponse<IEnumerable<GetReviewDto>>
-            {
-                Success = true,
-                Message = "Loading Reviews Is Done Successfully",
-                Data = result
-            };
-        }
-
-        public async  Task<ApiResponse<GetReviewDto>> UpdateReview(Guid ReviewId, UpdateReviewDto dto)
+        public async  Task<Result> UpdateReview(Guid ReviewId, UpdateReviewDto dto , CancellationToken cancellationToken = default)
         {
             var review = await _unitOfWork._reviewService.GetReviewById(ReviewId);
 
             if (review == null)
-            {
-                return new ApiResponse<GetReviewDto>
-                {
-                    Success = false,
-                    Message = "Review Doesn`t Exist"
-                };
-            }
+            return Result.Failure(ReviewErrors.ReviewNotFound);
 
-            if(review.patient!.Id != dto.PatientId) {
-                return new ApiResponse<GetReviewDto>
-                {
-                    Success = false,
-                    Message = "Unauthorized User"
-                };
-                }
+            if(review.patient!.Id != dto.PatientId) 
+                return Result.Failure(ReviewErrors.UnauthorizedUpdateReview);
 
             review.Comment = dto.Comment;
             review.rating = dto.rating;
 
             await _unitOfWork._reviewService.UpdateAsync(review);
-            await _unitOfWork.Complete();
+            await _unitOfWork.Complete(cancellationToken);
 
-            var result = review.Adapt<GetReviewDto>();
-
-            result.ReviwerName = review.patient.FullName;
-
-            return new ApiResponse<GetReviewDto>
-            {
-                Success = true ,
-                Message = "Review Updated Successfully",
-                Data = result
-            };
+             return Result.Success();
+            }
         }
     }
-}
+
