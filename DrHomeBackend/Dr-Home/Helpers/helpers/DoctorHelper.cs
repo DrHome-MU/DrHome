@@ -62,12 +62,20 @@ namespace Dr_Home.Helpers.helpers
                     Message = "Doctor Doesn`t Exist"
                 };
             }
-
+            if (doctor._appointments!.Count != 0)
+            {
+                foreach (var item in doctor._appointments)
+                {
+                    item.IsActive = false;
+                    item.DoctorId = null;
+                }
+            }
             if (doctor.ProfilePic_Path != null) await _fileManager.Delete(doctor.ProfilePic_Path);
 
-            await _unitOfWork._doctorService.DeleteAsync(doctor);
-            await _unitOfWork._userService.DeleteAsync(doctor);
 
+            await _unitOfWork._userService.DeleteAsync(doctor);
+            await _unitOfWork._doctorService.DeleteAsync(doctor);
+    
             await _unitOfWork.Complete();
 
             return new ApiResponse<Doctor>
@@ -192,9 +200,10 @@ namespace Dr_Home.Helpers.helpers
             return new ApiResponse<ShowDoctorDataDto> { Success = true, Message = "Done!", Data = result };
         }
 
-        public async Task<Result<IEnumerable<GetDoctorDto>>> FilterDoctors(DoctorFilterDto doctorFilterDto, CancellationToken cancellationToken = default)
+        public async Task<Result<IEnumerable<GetDoctorDtoV2>>> FilterDoctors(DoctorFilterDto doctorFilterDto, CancellationToken cancellationToken = default)
         {
             var doctors = await _unitOfWork._doctorService.FilterDoctorAsync(doctorFilterDto, cancellationToken);
+           
 
             return Result.Success(doctors);
         }

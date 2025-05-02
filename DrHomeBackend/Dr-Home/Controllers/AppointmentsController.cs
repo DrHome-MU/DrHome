@@ -50,7 +50,7 @@ namespace Dr_Home.Controllers
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <response code="200">هيرجعلك الداتا عادي لو موجودة ولو مش موجودة هترجعلك فاضية</response>
-        /// <response code = "404">Patient Is No Found </response>
+        /// <response code = "404">Patient Is Not Found </response>
         [HttpGet("Patients/{PatientId}/Appointments")]
         [Authorize(Roles = "Patient")]
         [ProducesResponseType(typeof(IEnumerable<GetPatientAppointmentsResponse>) , StatusCodes.Status200OK)]
@@ -78,7 +78,7 @@ namespace Dr_Home.Controllers
         /// <returns></returns>
         /// <response code = "200">Added Successfully</response>
         /// <response code = "409">This Time Is Already Booked By Someone else</response>
-        /// <response code = "404">Clinic Or Doctor Doesn`t Exist</response>
+        /// <response code = "404">Clinic Or Schedule Or Doctor Doesn`t Exist</response>
 
         [HttpPost("Schedules/{ScheduleId}/Appointments")]
 
@@ -121,6 +121,7 @@ namespace Dr_Home.Controllers
         /// Update IsActive(Delete Appointment) By Patient Or Doctor
         /// </summary>
         /// <param name="AppintmentId"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <response code = "204">Updated Successfully</response>
         /// <response code = "404">Appointment doesn`t exist</response>

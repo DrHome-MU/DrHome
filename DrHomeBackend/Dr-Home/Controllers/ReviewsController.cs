@@ -14,81 +14,101 @@ namespace Dr_Home.Controllers
     [ApiController]
     public class ReviewsController(IReviewHelper _reviewHelper) : ControllerBase
     {
-        //Add Review By Patient
+        /// <summary>
+        /// Add Review By Patient
+        /// </summary>
+        /// <param name="dto">
+        /// <br/>
+        /// --<b>PatientId</b> The Id Of The Patient Who Will Review Specific Doctor<br/>
+        /// --<b>DoctorId</b> The Id Of The Doctor who Will Be Reviewed<br/>
+        /// --<b>Comment</b> Can be null
+        /// --<b>rating</b>between 1 and 5
+        /// </param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "200" >Added Successfully</response>
+        /// <response code = "404">Doctor Or Patient Is Not Found</response>
+        /// <response code = "409">The Patient already added review to this doctor before</response>
         [HttpPost("")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> AddReview(AddReviewDto dto)
+        [ProducesResponseType(typeof(GetReviewDto), 200)]
+        public async Task<IActionResult> AddReview(AddReviewDto dto , CancellationToken cancellationToken)
         {
-            var response = await _reviewHelper.AddReview(dto);
+            var result = await _reviewHelper.AddReview(dto);
 
-            return (!response.Success) ? BadRequest(response) : Ok(response);
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
 
-        //Get All Reviews 
-        [HttpGet("GetAll")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAll()
-        {
-            var response = await _reviewHelper.GetAll();
-
-            return (response.Success) ? Ok(response) : NotFound(response);
-        }
-
-        //Get Reviews For Specific Doctor
+        /// <summary>
+        /// Get Doctor Reviewes
+        /// </summary>
+        /// <param name="DoctorId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "200">Data Loaded Successfully(Can Be Empty)</response>
+        /// <response code = "404">Doctor Doesn`t Exist</response>
 
         [HttpGet("{DoctorId}")]
-        
-        public async Task<IActionResult>GetReviews([FromRoute] Guid DoctorId)
+        [ProducesResponseType(typeof(IEnumerable<GetReviewDto>) , 200)]
+        public async Task<IActionResult>GetDoctorReviews([FromRoute] Guid DoctorId , CancellationToken cancellationToken)
         {
-            var response = await _reviewHelper.GetDoctorReviews(DoctorId);
+            var result = await _reviewHelper.GetDoctorReviews(DoctorId);
 
-            return (!response.Success) ? NotFound(response) : Ok(response);
-        }
-
-        //Get Reviews Done by Specific Patient
-
-        [HttpGet("")]
-        [Authorize(Roles = "Patient")]
-
-        public async Task<IActionResult>GetPatientReviews(Guid PatientId)
-        {
-            var response = await _reviewHelper.GetPatientReviews(PatientId);
-
-            return (!response.Success) ? NotFound(response) : Ok(response);
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
 
        
 
-        //Get Average Rating Of  Doctor 
+        /// <summary>
+        /// Get The Average Rating of doctor
+        /// </summary>
+        /// <param name="DoctorId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "200">it will return bool to know which the doctor has reviews or not and the average rating</response>
+        /// <response code = "404">Doctor doesn`t exist</response>
 
         [HttpGet("AverageRating")]
-        public async Task<IActionResult> GetAverageRating(Guid DoctorId)
+        [ProducesResponseType(typeof(GetAverageReviewDto), 200)]
+        public async Task<IActionResult> GetAverageRating(Guid DoctorId , CancellationToken cancellationToken )
         {
-            var response = await _reviewHelper.GetDoctorAverageRating(DoctorId);
-
-            return (!response.Success) ? NotFound(response) : Ok(response);
+            var result = await _reviewHelper.GetDoctorAverageRating(DoctorId , cancellationToken);
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
 
-        //Update Review By Patient
+        /// <summary>
+        /// Update Review By Patient
+        /// </summary>
+        /// <param name="ReviewId"></param>
+        /// <param name="dto"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "204">Updated Successfully</response>
+        /// <response code = "401">Unauthorized Update</response>
+        /// <response code = "404">Review Doesn`t Exist</response>
         [HttpPut("{ReviewId}")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> UpdateReview([FromRoute] Guid ReviewId ,  UpdateReviewDto dto)
+        public async Task<IActionResult> UpdateReview([FromRoute] Guid ReviewId ,  UpdateReviewDto dto , CancellationToken cancellationToken)
         {
-            var response = await _reviewHelper.UpdateReview(ReviewId, dto);
+           var result = await _reviewHelper.UpdateReview(ReviewId,dto, cancellationToken);
 
-            if(response.Message == "Unauthorized User")return Unauthorized(response);
-
-            return (response.Success)? Ok(response) : NotFound(response);
+            return result.IsSuccess ? NoContent() : result.ToProblem();
         }
-        //Delete Review By Patient Or Admin
+       /// <summary>
+       /// Delete Review By Patient or admin
+       /// </summary>
+       /// <param name="id"></param>
+       /// <returns></returns>
+       /// <response code = "204">Deleted Successfully</response>
+       /// <response code = "404">Review Doesn`t Exist</response>
 
         [HttpDelete("{id}")]
         [Authorize(Roles = ("Admin,Patient"))]
         public async Task<IActionResult> DeleteReview(Guid id)
         {
-            var response = await _reviewHelper.DeleteReview(id);
+           var result = await _reviewHelper.DeleteReview(id);
 
-            return (!response.Success) ? BadRequest(response) : Ok(response);
+            return result.IsSuccess ? NoContent() : result.ToProblem();
         }
     }
 }

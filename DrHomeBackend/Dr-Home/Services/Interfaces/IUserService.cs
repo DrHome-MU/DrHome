@@ -9,6 +9,8 @@ namespace Dr_Home.Services.Interfaces
 
         Task<User> GetById(Guid id);
 
+        
+
         Task AddAsync(User entity);
 
         Task<User> UpdateAsync(User entity);

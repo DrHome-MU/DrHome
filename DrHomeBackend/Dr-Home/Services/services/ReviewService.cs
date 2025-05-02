@@ -7,9 +7,9 @@ namespace Dr_Home.Services.services
 {
     public class ReviewService(AppDbContext db) : IReviewService
     {
-        public async Task<Review> AddAsync(Review review)
+        public async Task<Review> AddAsync(Review review , CancellationToken cancellationToken = default)
         {
-            await db.Set<Review>().AddAsync(review);
+            await db.Set<Review>().AddAsync(review ,cancellationToken);
 
             return review;
 
@@ -47,6 +47,11 @@ namespace Dr_Home.Services.services
             var review = await db.Set<Review>().Include(r => r.patient).Include(r => r.doctor)
                 .FirstOrDefaultAsync(r => r.Id == reviewId);
             return review;
+        }
+
+        public async Task<bool> IsPatientReviewedBefore(Guid patientId, Guid DoctorId, CancellationToken cancellationToken = default)
+        {
+            return await db.Set<Review>().AnyAsync(r => r.PatientId == patientId && r.DoctorId == DoctorId , cancellationToken);
         }
 
         public async Task<Review> UpdateAsync(Review review)

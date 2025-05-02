@@ -1,5 +1,6 @@
 ﻿using Dr_Home.Data;
 using Dr_Home.Data.Models;
+using Dr_Home.DTOs.AppointmentDTOs;
 using Dr_Home.DTOs.DoctorDtos;
 using Dr_Home.Services.Interfaces;
 using Mapster;
@@ -20,16 +21,23 @@ namespace Dr_Home.Services.services
             return entity;
         }
 
-        public async Task<IEnumerable<GetDoctorDto>> FilterDoctorAsync(DoctorFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetDoctorDtoV2>> FilterDoctorAsync(DoctorFilterDto filter, CancellationToken cancellationToken = default)
         {
-            var doctors = await db.Set<Doctor>().Where(x =>
+            var doctors = await db.Set<Doctor>().Include(d => d._specialization).Where(x =>
                 (string.IsNullOrEmpty(filter.FullName) || filter.FullName ==  x.FullName) && 
                 (string.IsNullOrEmpty(filter.city) || filter.city == x.city) && 
                 (string.IsNullOrEmpty(filter.region) || filter.region == x.region) && 
                 (filter.SpecializationId == 0 || (filter.SpecializationId == x.SpecializationId)))
                 .ToListAsync(cancellationToken);
 
-            var result = doctors.Adapt<IEnumerable<GetDoctorDto>>(); 
+            var result = new List<GetDoctorDtoV2>();
+
+            foreach(var doctor in doctors)
+            {
+                var item = doctor.Adapt<GetDoctorDtoV2>(); 
+                item.specialization = doctor._specialization.Name;
+                result.Add(item);   
+            }
 
             return result;
                
@@ -42,7 +50,7 @@ namespace Dr_Home.Services.services
 
         public async Task<Doctor> GetById(Guid id)
         {
-            return await db.Set<Doctor>().Include(d => d._specialization).FirstOrDefaultAsync(x => x.Id == id);
+            return await db.Set<Doctor>().Include(d => d._specialization).Include(d => d._appointments).FirstOrDefaultAsync(x => x.Id == id);
         }
         public async Task<Doctor> UpdateAsync(Doctor entity)
         {

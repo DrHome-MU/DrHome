@@ -6,7 +6,7 @@
         {
             RuleFor(x => x.PatientName)
                .NotEmpty()
-               .WithMessage("Phone Number Is Required")
+               .WithMessage("Patient Name Is Required")
                .Length(2, 100)
                .WithMessage("Patient Name Must be between 2 and 100 characters");
 
