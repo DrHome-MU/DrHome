@@ -28,7 +28,7 @@ namespace Dr_Home.Services.services
 
         public async Task<Clinic> GetById(Guid id)
         {
-            return await db.Set<Clinic>().FindAsync(id);
+            return await db.Set<Clinic>().Include(c => c._schedules).FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task<Clinic> GetClinicByNameAndCityAndRegion(string name, string city, string region)

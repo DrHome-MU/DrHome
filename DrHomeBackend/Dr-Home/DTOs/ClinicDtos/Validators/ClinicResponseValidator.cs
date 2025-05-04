@@ -29,6 +29,17 @@ namespace Dr_Home.DTOs.ClinicDtos.Validators
                .WithMessage("Enter Correct Phone Number")
                .When(x => x.PhoneNumber is not null);
 
+            //AppointmentFee 
+            RuleFor(x => x.AppointmentFee)
+                .NotEmpty()
+                .Must(ValidateFee)
+                .WithMessage("Appointment Fee Must Be >= 0");
+
+            //DetailedAddress 
+            RuleFor(x => x.DetailedAddress)
+                .NotEmpty()
+                .WithMessage("The Detailed Address Is Required");
+
 
         }
 
@@ -43,6 +54,10 @@ namespace Dr_Home.DTOs.ClinicDtos.Validators
             }
 
             return true;
+        }
+        private bool ValidateFee(decimal fee)
+        {
+            return fee >= 0;
         }
     }
 }

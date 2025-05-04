@@ -7,8 +7,10 @@ using System.Runtime.InteropServices;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class ClinicHelper(IUnitOfWork _unitOfWork) : IClinicHelper
+    public class ClinicHelper(IUnitOfWork _unitOfWork , IScheduleHelper scheduleHelper) : IClinicHelper
     {
+        private readonly IScheduleHelper _scheduleHelper = scheduleHelper;
+
         public async Task<ApiResponse<ClinicResponseDto>> AddClinic(AddClinicDto dto)
         {
             var doctor = await _unitOfWork._doctorService.GetById(dto.DoctorId);
@@ -47,7 +49,10 @@ namespace Dr_Home.Helpers.helpers
             var clinic = await _unitOfWork._clinicalService.GetById(id);
 
             if (clinic == null) return new ApiResponse<Clinic> { Success = false, Message = "Not Found" };
-
+            foreach(var item in clinic._schedules!.ToList())
+            {
+                await _scheduleHelper.DeleteAsync(item.Id);
+            }
             await _unitOfWork._clinicalService.DeleteClinicAsync(clinic);
             await _unitOfWork.Complete();
 
@@ -119,6 +124,8 @@ namespace Dr_Home.Helpers.helpers
             clinic.city = dto.city;
             clinic.region = dto.region;
             clinic.PhoneNumber = dto.PhoneNumber;
+            clinic.AppointmentFee = dto.AppointmentFee;
+            clinic.DetailedAddress = dto.DetailedAddress;
 
             await _unitOfWork._clinicalService.UpdateClinic(clinic);
             await _unitOfWork.Complete();

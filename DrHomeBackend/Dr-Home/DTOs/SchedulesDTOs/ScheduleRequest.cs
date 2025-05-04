@@ -7,10 +7,7 @@
     TimeOnly StartTime,
     TimeOnly EndTime,
 
-    int AppointmentDurationInMiniutes,
+    int AppointmentDurationInMiniutes
 
-    
-
-    decimal Fee
         );
 }

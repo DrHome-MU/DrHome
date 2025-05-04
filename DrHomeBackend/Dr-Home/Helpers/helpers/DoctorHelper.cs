@@ -13,9 +13,10 @@ using System.Reflection.Metadata.Ecma335;
 namespace Dr_Home.Helpers.helpers
 {
     public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,
-        IFileManager _fileManager) : IDoctorHelper
+        IFileManager _fileManager , IClinicHelper clinicHelper) : IDoctorHelper
     {
-        
+        private readonly IClinicHelper _clinicHelper = clinicHelper;
+
         public async Task<ApiResponse<GetDoctorDto>> AddDoctor(AddDoctorDto dto)
         {
             var hashPassword = _auth.HashPassword(dto.Password);
@@ -61,6 +62,10 @@ namespace Dr_Home.Helpers.helpers
                     Success = false,
                     Message = "Doctor Doesn`t Exist"
                 };
+            }
+            if (doctor.clinics!.Count() != 0)
+            {
+                foreach (var item in doctor.clinics!.ToList()) await _clinicHelper.DeleteClinic(item.Id);
             }
             if (doctor._appointments!.Count != 0)
             {
