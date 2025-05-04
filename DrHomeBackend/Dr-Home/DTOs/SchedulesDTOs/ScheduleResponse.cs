@@ -11,8 +11,6 @@
         public  int AppointmentDurationInMiniutes {  get; set; }
 
         public IDictionary<TimeOnly, bool> ValidTimesForBooking { get; set; } = new Dictionary<TimeOnly, bool>();
-
-
     }
 }
 

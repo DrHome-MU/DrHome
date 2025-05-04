@@ -8,8 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dr_Home.Services.services
 {
-    public class DoctorService(AppDbContext db) : IDoctorService
+    public class DoctorService(AppDbContext db, IScheduleHelper scheduleHelper, IReviewHelper reviewHelper) : IDoctorService
     {
+        private readonly IScheduleHelper _scheduleHelper = scheduleHelper;
+        
+        private readonly IReviewHelper _reviewHelper = reviewHelper;
+
         public async Task AddAsync(Doctor entity)
         {
             await db.Set<Doctor>().AddAsync(entity);
@@ -23,24 +27,46 @@ namespace Dr_Home.Services.services
 
         public async Task<IEnumerable<GetDoctorDtoV2>> FilterDoctorAsync(DoctorFilterDto filter, CancellationToken cancellationToken = default)
         {
-            var doctors = await db.Set<Doctor>().Include(d => d._specialization).Where(x =>
-                (string.IsNullOrEmpty(filter.FullName) || filter.FullName ==  x.FullName) && 
-                (string.IsNullOrEmpty(filter.city) || filter.city == x.city) && 
-                (string.IsNullOrEmpty(filter.region) || filter.region == x.region) && 
-                (filter.SpecializationId == 0 || (filter.SpecializationId == x.SpecializationId)))
-                .ToListAsync(cancellationToken);
+            var data = await db.Set<Clinic>().Where(clinic =>
+                (string.IsNullOrEmpty(filter.FullName) || filter.FullName ==  clinic.doctor!.FullName) && 
+                (string.IsNullOrEmpty(filter.city) || filter.city == clinic.city) && 
+                (string.IsNullOrEmpty(filter.region) || filter.region == clinic.region) && 
+                (filter.SpecializationId == 0 || (filter.SpecializationId == clinic.doctor!.SpecializationId)))
+                .Select (clinic => new GetDoctorDtoV2()
+                {
+                    doctorId = clinic.doctor.Id,
+                    doctorName = clinic.doctor.FullName,
+                    
+                    specialization = clinic.doctor._specialization.Name,
+                    
+                    profilePicPath = clinic.doctor.ProfilePic_Path,
+                    
+                    doctorSummary = clinic.doctor.Summary,
+                    
+                    clinicId = clinic.Id,
+        
+                    clinicName = clinic.ClinicName,
+                    
+                    clinicPhone  = clinic.PhoneNumber,
 
-            var result = new List<GetDoctorDtoV2>();
+                    appointmentFee  = clinic.AppointmentFee,
 
-            foreach(var doctor in doctors)
+                    clinicCity  = clinic.city,
+
+                    clinicRegion  = clinic.region,
+                    
+                    detailedAddress  = clinic.DetailedAddress,
+                }).ToListAsync(cancellationToken);
+
+            foreach (var item in data)
             {
-                var item = doctor.Adapt<GetDoctorDtoV2>(); 
-                item.specialization = doctor._specialization.Name;
-                result.Add(item);   
+                var rev = await _reviewHelper.GetDoctorReviews(item.doctorId);
+                item.doctorReviews = rev.Value;
+                var sec = await _scheduleHelper.GetSchedulesAsync(item.doctorId, item.clinicId);
+                item.schedules = sec.Value;
             }
 
-            return result;
-               
+            return data;
         }
 
         public async Task<IEnumerable<Doctor>> GetAllAsync()
