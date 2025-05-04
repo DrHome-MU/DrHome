@@ -17,8 +17,6 @@ namespace Dr_Home.Data.Models
 
         public int AppointmentDurationInMiniutes { get; set; }
 
-        public decimal Fee { get; set; }
-
         public Clinic? clinic { get; set; } 
 
         public List<Appointment>? _appointments { get; set; }

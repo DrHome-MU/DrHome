@@ -33,13 +33,6 @@ namespace Dr_Home.DTOs.SchedulesDTOs
            .LessThan(x => x.EndTime)
            .WithMessage("Start Time Must be less than End Time");
 
-            //Fee 
-
-            RuleFor(x => x.Fee)
-                .NotEmpty()
-                .Must(ValidateFee)
-                .WithMessage("Fee Must be >= 0");
-            //AppointmentDuration
             //AppointmentDuration
             RuleFor(x => x.AppointmentDurationInMiniutes)
                 .NotEmpty()
@@ -61,10 +54,7 @@ namespace Dr_Home.DTOs.SchedulesDTOs
 
             return (hour >= 0 && hour <= 23);
         }
-        private bool ValidateFee(decimal fee)
-        {
-            return fee >= 0;
-        }
+       
         private bool ValidateDuration(int duration)
         {
             return duration >= 5;

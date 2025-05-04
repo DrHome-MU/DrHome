@@ -106,7 +106,9 @@ namespace Dr_Home.Helpers.helpers
                     ClinicName = appointment._schedule!.clinic!.ClinicName,
                     ClinicCity = appointment._schedule!.clinic!.city,
                     ClinicRegion = appointment._schedule!.clinic!.region,
-                    ClinicPhoneNumber = appointment._schedule.clinic!.PhoneNumber
+                    ClinicPhoneNumber = appointment._schedule.clinic!.PhoneNumber,
+                    AppointmentDate = appointment._schedule.WorkDay, 
+                    AppointmentTime = appointment.AppointmentTime
                 };
                 result.Add(item);
             }
@@ -122,7 +124,7 @@ namespace Dr_Home.Helpers.helpers
             if (appointment == null)
                 return Result.Failure(AppointmentErrors.AppointmentNotFound);
 
-            appointment.IsActive = !appointment.IsActive;
+            appointment.IsActive = false;
 
             await _db.SaveChangesAsync(cancellationToken);
 

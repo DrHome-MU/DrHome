@@ -17,5 +17,9 @@ namespace Dr_Home.DTOs.ClinicDtos
 
        
         public string? PhoneNumber { get; set; }
+
+        public decimal AppointmentFee { get; set; }
+
+        public string DetailedAddress { get; set; } = string.Empty;
     }
 }

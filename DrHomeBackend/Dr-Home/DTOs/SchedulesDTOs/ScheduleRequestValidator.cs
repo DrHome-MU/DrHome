@@ -31,12 +31,6 @@
            .LessThan(x => x.EndTime)
            .WithMessage("Start Time Must be less than End Time");
 
-            //Fee 
-
-            RuleFor(x => x.Fee)
-                .NotEmpty()
-                .Must(ValidateFee)
-                .WithMessage("Fee Must be >= 0");
             //AppointmentDuration
             RuleFor(x => x.AppointmentDurationInMiniutes)
                 .NotEmpty()

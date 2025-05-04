@@ -155,7 +155,7 @@ namespace Dr_Home.Helpers.helpers
             schedule.WorkDay = request.WorkDay;
             schedule.StartTime = request.StartTime; 
             schedule.EndTime = request.EndTime; 
-            schedule.Fee = request.Fee;
+            //schedule.Fee = request.Fee;
             schedule.AppointmentDurationInMiniutes = request.AppointmentDurationInMiniutes;
 
             await _unitOfWork.Complete(cancellationToken);

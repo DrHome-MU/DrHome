@@ -14,6 +14,9 @@
 
         public string? ClinicPhoneNumber {  get; set; }
 
+        public DateOnly AppointmentDate {  get; set; }
+        public TimeOnly AppointmentTime {  get; set; }
+
 
     }
 }

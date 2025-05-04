@@ -12,7 +12,6 @@
 
         public IDictionary<TimeOnly, bool> ValidTimesForBooking { get; set; } = new Dictionary<TimeOnly, bool>();
 
-        public  decimal Fee { get; set; }
 
     }
 }
