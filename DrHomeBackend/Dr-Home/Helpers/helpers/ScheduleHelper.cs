@@ -58,6 +58,12 @@ namespace Dr_Home.Helpers.helpers
             if(schedule == null)
                 return Result.Failure(ScheduleErrors.ScheduleNotFound);
 
+            bool scheduleCanBeDeleted = ((schedule.WorkDay == DateOnly.FromDateTime(DateTime.UtcNow) 
+                && schedule.EndTime >= TimeOnly.FromDateTime(DateTime.UtcNow)) || schedule._appointments!.Count == 0);
+
+            if (!scheduleCanBeDeleted)
+                return Result.Failure(ScheduleErrors.ScheduleCannotBeDeleted);
+
             var appointments = schedule._appointments;
             
             

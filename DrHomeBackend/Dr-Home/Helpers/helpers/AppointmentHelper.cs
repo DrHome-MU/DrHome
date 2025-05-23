@@ -1,6 +1,8 @@
-﻿using Dr_Home.DTOs.AppointmentDTOs;
+﻿using Dr_Home.Data.Models;
+using Dr_Home.DTOs.AppointmentDTOs;
 using Mapster;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Dr_Home.Helpers.helpers
@@ -28,7 +30,7 @@ namespace Dr_Home.Helpers.helpers
             if (clinic.doctor == null)
                 return Result.Failure<AppointmentResponse>(DoctorErrors.DoctorNotFound);
 
-            var TimeIsBooked = await _db.Set<Appointment>().AnyAsync(x => x.AppointmentTime == request.AppointmentTime && x.IsActive == true);
+            var TimeIsBooked = await _db.Set<Appointment>().AnyAsync(x => x.ScheduleId == ScheduleId && x.AppointmentTime == request.AppointmentTime && x.IsActive == true);
 
             if (TimeIsBooked)
                 return Result.Failure<AppointmentResponse>(AppointmentErrors.AppointmentConflict);
@@ -61,25 +63,44 @@ namespace Dr_Home.Helpers.helpers
             if(doctor is null)
                 return Result.Failure<IEnumerable<GetDoctorAppointments>>(DoctorErrors.DoctorNotFound);
 
-            var appointments = await  _db.Set<Appointment>()
-                 .Where(a => a.IsActive == true && a.DoctorId == DoctorId)
-                 .Include(a => a._schedule)
-                 .ThenInclude(s => s.clinic)
-                 .ToListAsync(cancellationToken);
-           // int count = appointments.Count;
-          //  _logger.LogInformation("the appointments count = {count}", count);
 
-            var results = appointments.Where(a => a._schedule != null && a._schedule.clinic != null).GroupBy(a => new { a._schedule!.ClinicId, a._schedule.WorkDay })
-            .Select(Group => new GetDoctorAppointments
-            {
-                ClinicId = Group.Key.ClinicId,
-                WorkDay = Group.Key.WorkDay,
-                ClinicName = Group.First()._schedule!.clinic!.ClinicName,
-                Appointments = Group.Adapt<List<AppointmentResponse>>()
-            })
-            .ToList();
+            var results = await _db.Set<Appointment>()
+                            .Where(a => a.IsActive && a.DoctorId == DoctorId)
+                            .Include(a => a._schedule)
+                            .ThenInclude(s => s.clinic)
+                            .AsNoTracking()
+                            .GroupBy(a => new
+                            {
+                                clinicId = a._schedule!.ClinicId,
+                                clinicName = a._schedule.clinic!.ClinicName
+                            })
+                            .Select(group => new
+                            {
+                                group.Key.clinicId,
+                                group.Key.clinicName,
+                                Appointments = group.ToList()
+                            })
+                            .ToListAsync(cancellationToken);
 
-            return Result.Success<IEnumerable<GetDoctorAppointments>>(results);
+            var finalResults = results
+                .Select(g => new GetDoctorAppointments
+                {
+                    ClinicId = g.clinicId,
+                    ClinicName = g.clinicName,
+                    _appointmentsGroupedBYWorkDays = g.Appointments
+                        .GroupBy(a => a._schedule!.WorkDay)
+                        .Select(gr => new GetAppointmentsGroupedBYWorkDay
+                        {
+                            WorkDay = gr.Key,
+                            Appointments = gr.Adapt<IEnumerable<AppointmentResponse>>()
+                                                .OrderBy(a => a.AppointmentTime)
+                        })
+                        .OrderBy(x => x.WorkDay)
+                        .ToList()
+                }).ToList();
+
+
+            return Result.Success<IEnumerable<GetDoctorAppointments>>(finalResults);
         }
         public async Task<Result<IEnumerable<GetPatientAppointmentsResponse>>> GetPatientAppointmentsAsync(Guid PatientId, CancellationToken cancellationToken = default)
         {
@@ -108,13 +129,16 @@ namespace Dr_Home.Helpers.helpers
                     ClinicRegion = appointment._schedule!.clinic!.region,
                     ClinicPhoneNumber = appointment._schedule.clinic!.PhoneNumber,
                     AppointmentDate = appointment._schedule.WorkDay, 
-                    AppointmentTime = appointment.AppointmentTime
+                    AppointmentTime = appointment.AppointmentTime,
+                    AppointmentFee = appointment._schedule!.clinic!.AppointmentFee
                 };
                 result.Add(item);
             }
 
-            return Result.Success<IEnumerable<GetPatientAppointmentsResponse>>(result);
-            
+            return Result.Success<IEnumerable<GetPatientAppointmentsResponse>>(
+                 result.OrderBy(a => a.AppointmentDate)
+                   .ThenBy(a => a.AppointmentTime)
+                );
         }
 
         public async Task<Result> toggleActiveAsync(Guid AppointmentId, CancellationToken cancellationToken = default)

@@ -10,5 +10,8 @@
 
         public static Error UnauthorizedAdding = new("Schedule.UnauthorizedAdding", "This Doctor Has No Right To Add Schedule In This Clinic",
            StatusCodes.Status401Unauthorized);
+
+        public static Error ScheduleCannotBeDeleted = new("Schedule.ScheduleCannotBeDeleted", "This schedcule already has Booked Appointments and can`t be deleted",
+           StatusCodes.Status400BadRequest);
     }
 }

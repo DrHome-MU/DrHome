@@ -5,8 +5,7 @@
         public Guid ClinicId { get; set; }
 
         public string ClinicName { get; set; } = string.Empty;
-        public DateOnly WorkDay { get; set; }
-
-        public List<AppointmentResponse> Appointments { get; set; } = [];
+        
+        public IEnumerable<GetAppointmentsGroupedBYWorkDay> _appointmentsGroupedBYWorkDays { get; set; } = [];
     }
 }

@@ -8,8 +8,8 @@
         string PatientPhoneNumber,
         bool IsActive,
         bool IsDone,
-        Guid DoctorId , 
-        Guid PatientId,
-        Guid Scheduleid
+        Guid? DoctorId, 
+        Guid? PatientId,
+        Guid? ScheduleId
         );
 }

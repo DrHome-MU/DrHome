@@ -1,11 +1,13 @@
 ﻿using Dr_Home.Authentication;
 using Dr_Home.Data.Models;
 using Dr_Home.DTOs.AuthDTOs;
+using Dr_Home.DTOs.DoctorDtos;
 using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
 using Hangfire;
+using Mapster;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -358,6 +360,23 @@ namespace Dr_Home.Helpers.helpers
             await _sender.SendRegisterEmailAsync(sendDto);
 
             return token;
+        }
+
+        public async Task<GetAllUsersResponse> GetAllUsers()
+        {
+            var patients = await _unitOfWork._patientService.GetAllAsync();
+            var doctors = await _unitOfWork._doctorService.GetAllAsync();
+
+            var result = new GetAllUsersResponse
+            {
+                Doctors = doctors.Adapt<IEnumerable<ShowDoctorDataDto>>(), 
+                Patients = patients.Adapt<IEnumerable<UserProfileDto>>(),
+                NumberOfDoctors = doctors.Count(),
+                NumberOfPatients = patients.Count()
+            };  
+           
+            
+           return result;   
         }
     }
 }

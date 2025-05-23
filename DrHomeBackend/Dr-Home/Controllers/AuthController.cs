@@ -153,6 +153,14 @@ namespace Dr_Home.Controllers
 
             return ( !response.Success ) ? BadRequest(response) : Ok(response) ;
         }
+        [HttpGet("GetAll")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var result = await _auth.GetAllUsers();
+
+            return Ok(result);  
+        }
         
         //Delete User By Id Endpoint
         [HttpDelete("{id}")]
