@@ -16,7 +16,9 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<ApiResponse<User>> LogIn(LogInDto dto);
 
-        Task<bool> VerifyAccount(string token);
+        Task<Result<ActiveAccountResponse>> VerifyAccount(CheckCodeDto checkCodeDto);
+
+        Task<Result> ResendVerifcationCode(ResendVerficationCodeDto dto);
 
         Task<ApiResponse<IEnumerable<User>>> GetUsers();
 
@@ -24,13 +26,17 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<ApiResponse<UserProfileDto>> UpdateProfile(Guid id , UserProfileDto dto);
 
-        Task<ApiResponse<User>> DeleteUser(Guid id);
+        Task<ApiResponse<User>> PanUser(Guid id , int numOfPanDays);
 
         Task<ApiResponse<User>> GetUser(Guid id);
 
         Task<ApiResponse<User>>ChangePassword(Guid id , ChangePasswordDto dto);
-        Task<string> ForgetPassword(forgotPasswordDto dto);
+        Task<Result> ForgetPassword(ForgetPasswordDto dto);
+
+        Task<Result> ResetPassword(ResetPasswordDto dto);
 
         Task<GetAllUsersResponse> GetAllUsers();
+
+        Task<bool> EnableUser(Guid id);
     }
 }

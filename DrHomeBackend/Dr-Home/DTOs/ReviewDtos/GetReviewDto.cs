@@ -10,5 +10,7 @@
         public int rating { get; set; }
 
         public DateTime ReviewTime { get; set; }
+
+        public bool IsReported { get; set; }
     }
 }

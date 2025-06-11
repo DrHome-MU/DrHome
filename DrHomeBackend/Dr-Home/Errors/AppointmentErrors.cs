@@ -7,5 +7,11 @@
 
         public static Error AppointmentNotFound = new("Appointment.NotFound", "The Appointment Is Not Found",
           StatusCodes.Status404NotFound);
+
+        public static Error UnauhorizedDetailsUpdate = new("Appointment.UnauhorizedDetailsUpdate", "Unauthorized Update",
+         StatusCodes.Status401Unauthorized);
+
+        public static Error CanNotUpdateDetails = new("Appointment.CanNotUpdateDetails", "Cannot Update Appointment Details While The Appointment Is Not Done",
+        StatusCodes.Status400BadRequest);
     }
 }

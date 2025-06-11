@@ -36,12 +36,18 @@ namespace Dr_Home.Data.Models
 
         public DateOnly? DateOfBirth { get; set; }
 
-        public string? RefreshToken { get; set; }
+        public string? HashVerficationCode { get; set; }
 
-        public DateTime RefreshTokenExpired { get; set; }
-        
-        public string? ConfirmationCode { get; set; }
+        public DateTime? VerficationCodeExpiryTime { get; set; }
 
-        public bool IsActive { get; set; }
+        public string? HashForgetPasswordCode { get; set; }
+
+        public DateTime? ForgetPasswordCodeExpiryTime { get; set; }
+
+        public bool IsActive { get; set; } 
+
+        public int NumberOfWastedAppointments { get; set; }
+
+        public DateTime? BannedTo { get; set; }
     }
 }

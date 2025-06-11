@@ -29,7 +29,12 @@ namespace Dr_Home.Controllers
 
             return (response.Success) ? Ok(response) : NotFound(response);
         }
-
+        [HttpPut("{id}")]
+        public async Task<IActionResult> update([FromRoute] int id , [FromForm] IFormFile? _pic ,CancellationToken cancellationToken)
+        {
+            var result = await _specializationHelper.updateAsync(id , _pic, cancellationToken);
+            return result.IsSuccess ? NoContent() : result.ToProblem();
+        }
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken cancellationToken)

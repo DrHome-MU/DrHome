@@ -5,26 +5,18 @@
     public class RegionsController(IRegionHelper _regionHelper) : ControllerBase
     {
 
-        [HttpPost("")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddRegion([FromBody] AddRegionDto dto, CancellationToken cancellationToken)
-        {
-            var response = await _regionHelper.AddRegionAsync(dto, cancellationToken);
-            return (response.Success ? Ok(response) : BadRequest(response));
-        }
-
         [HttpGet("{CityId}")]
 
-        public async Task<IActionResult> GetCityRegions([FromRoute] int CityId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetCityRegions([FromRoute] int CityId,  string lang = "ar" )
         {
-            var response = await _regionHelper.GetCityRegionsAsync(CityId, cancellationToken);
+            var response = await _regionHelper.GetCityRegionsAsync(CityId, lang);
             return (response.Success ? Ok(response) : NotFound(response));
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll([FromQuery] string lang = "ar")
         {
-            var response = await _regionHelper.GetAllRegionsAsync(cancellationToken);
+            var response = await _regionHelper.GetAllRegionsAsync(lang);
 
             return (response.Success ? Ok(response) : NotFound(response));
         }

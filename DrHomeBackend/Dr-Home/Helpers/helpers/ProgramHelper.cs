@@ -158,6 +158,10 @@ namespace Dr_Home.Helpers.helpers
             //Appointment Helper
             services.AddScoped<IAppointmentHelper, AppointmentHelper>();
 
+            //Support Helper
+
+            services.AddScoped<ISupportHelper , SupportHelper>();
+
 
             services.AddScoped<IJwtProvider , JwtProvider>();
 

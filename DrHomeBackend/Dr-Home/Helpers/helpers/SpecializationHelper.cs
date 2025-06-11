@@ -1,10 +1,14 @@
 ﻿using Dr_Home.Data.Models;
+using Dr_Home.File_Manager;
 using Dr_Home.UnitOfWork;
+using System.Numerics;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class SpecializationHelper(IUnitOfWork _unitOfWork) : ISpecializationHelper
+    public class SpecializationHelper(IUnitOfWork _unitOfWork , IFileManager fileManager) : ISpecializationHelper
     {
+        private readonly IFileManager _fileManager = fileManager;
+
         public async Task<ApiResponse<Specialization>> AddAsync(string name, CancellationToken cancellationToken = default)
         {
             var entity = new Specialization { Name = name };
@@ -20,7 +24,22 @@ namespace Dr_Home.Helpers.helpers
 
         }
 
-       
+        public async Task<Result> updateAsync(int id , IFormFile? _pic , CancellationToken cancellationToken = default)
+        {
+            var entity = await _unitOfWork._specializationService.GetByIdAsync(id, cancellationToken);
+
+            if (entity == null)
+                return Result.Failure(new Error("specialization.NotFound", "Not Found", StatusCodes.Status404NotFound));
+            if (entity.PicturePath!= null) { await _fileManager.Delete(entity.PicturePath); }
+            if (_pic == null)
+                entity.PicturePath = null;
+
+            else entity.PicturePath = await _fileManager.Upload(_pic, cancellationToken);
+
+            await _unitOfWork.Complete(cancellationToken);
+
+            return Result.Success();
+        }
 
         public async Task<ApiResponse<IEnumerable<Specialization>>> GetAllAsync(CancellationToken cancellationToken = default)
         {

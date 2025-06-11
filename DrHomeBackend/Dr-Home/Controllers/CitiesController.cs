@@ -9,20 +9,10 @@ namespace Dr_Home.Controllers
     public class CitiesController(ICityHelper _cityHelper) : ControllerBase
     {
 
-        [HttpPost("")]
-        [Authorize(Roles = "Admin")]
-
-        public async Task<IActionResult> Add(string name, CancellationToken cancellationToken)
-        {
-            var response = await _cityHelper.AddAsync(name, cancellationToken);
-
-            return (response.Success) ? Ok(response) : BadRequest(response);
-        }
-
         [HttpGet("")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll([FromQuery] string lang = "ar")
         {
-            var response = await _cityHelper.GetAllAsync(cancellationToken);
+            var response = await _cityHelper.GetAllAsync(lang);
 
             return (response.Success ? Ok(response) : BadRequest(Response));
         }

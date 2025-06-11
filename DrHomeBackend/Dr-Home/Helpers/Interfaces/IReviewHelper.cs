@@ -13,9 +13,13 @@ namespace Dr_Home.Helpers.Interfaces
 
         Task<Result<IEnumerable<GetReviewDto>>> GetDoctorReviews(Guid DoctorId , CancellationToken cancellationToken = default);
 
-       
 
+        Task<Result<IEnumerable<GetReviewDto>>> GetPatientReviews(Guid PatientId, CancellationToken cancellationToken = default);
         Task<Result<GetAverageReviewDto>>GetDoctorAverageRating(Guid DoctorId , CancellationToken cancellationToken = default);
+
+        Task<Result> ReportReview(Guid id);
+
+        Task<Result<IEnumerable<GetReviewDto>>> GetReportedReviews();
 
     }
 }

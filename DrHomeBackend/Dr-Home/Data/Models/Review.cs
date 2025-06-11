@@ -16,6 +16,8 @@ namespace Dr_Home.Data.Models
 
         public DateTime ReviewTime { get; set; }
 
+        public bool IsReported { get; set; }
+
         public Patient? patient { get; set; }
 
         public Doctor?  doctor { get; set; } 

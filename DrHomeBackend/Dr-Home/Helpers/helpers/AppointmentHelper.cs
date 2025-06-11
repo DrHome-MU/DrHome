@@ -39,6 +39,7 @@ namespace Dr_Home.Helpers.helpers
 
             appointment.DoctorId = schedule.clinic!.DoctorId;
             appointment.ScheduleId = schedule.Id;
+            appointment.AppointmentDate = schedule.WorkDay;
 
             await _db.Set<Appointment>().AddAsync(appointment, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
@@ -156,15 +157,29 @@ namespace Dr_Home.Helpers.helpers
 
         }
 
-        public async Task<Result> toggleDoneeAsync(Guid AppointmentId, CancellationToken cancellationToken = default)
+        public async Task<Result> toggleDoneAsync(Guid AppointmentId,AppointmentDoneRequest request, CancellationToken cancellationToken = default)
         {
             var appointment = await _db.Set<Appointment>().FindAsync(AppointmentId, cancellationToken);
 
             if (appointment == null)
                 return Result.Failure(AppointmentErrors.AppointmentNotFound);
 
-            appointment.IsDone = !appointment.IsDone;
-            appointment.IsActive = !appointment.IsActive;
+            var patient = await _db.Set<Patient>().FindAsync(appointment.PatientId, cancellationToken);
+
+            if (request.IsDone)
+            {
+                appointment.IsDone = true; 
+                appointment.AppointmentDetails = request.AppointmentDetails;
+                appointment.IsActive = false;
+                patient!.NumberOfWastedAppointments = 0;
+            }
+            else
+            {
+                appointment.IsActive = false;
+                int numOfDays = patient!.NumberOfWastedAppointments * 10; 
+                patient!.BannedTo = DateTime.UtcNow.AddDays(numOfDays);
+                patient!.NumberOfWastedAppointments += 1;
+            }
 
             await _db.SaveChangesAsync(cancellationToken);
 
@@ -217,6 +232,58 @@ namespace Dr_Home.Helpers.helpers
             
         }
 
-        
+        public async Task<Result<IEnumerable<DoctorAppointmentsDetailsResponse>>> GetDoctorAppointmentsDetailsAsync(Guid DoctorId)
+        {
+            var AppointmentsDetails = await _db.Set<Appointment>()
+                .Where(a => a.DoctorId == DoctorId && a.IsDone == true)
+                .Select(a => new DoctorAppointmentsDetailsResponse(
+                    a.Id,
+                    a.PatientName,
+                    a.AppointmentDate, 
+                    a.AppointmentTime,
+                    a.AppointmentDetails
+                    ))
+                .ToListAsync();
+
+            return Result.Success<IEnumerable<DoctorAppointmentsDetailsResponse>>(AppointmentsDetails);
+
+        }
+
+        public async Task<Result<IEnumerable<PatientAppointmentsDetailsResponse>>> GetPatientAppointmentsDetailsAsync(Guid PatientId)
+        {
+            var AppointmentsDetails = await _db.Set<Appointment>()
+                 .Where(a => a.PatientId == PatientId && a.IsDone == true && a.DoctorId != null)
+                 .Select(a => new PatientAppointmentsDetailsResponse(
+                     a._doctor!.FullName,
+                     a.AppointmentDate,
+                     a.AppointmentTime,
+                     a.AppointmentDetails
+                     ))
+                 .ToListAsync();
+
+            return Result.Success<IEnumerable<PatientAppointmentsDetailsResponse>>(AppointmentsDetails);
+        }
+
+      public async Task<Result> UpdateAppointmentDetails(Guid DoctorId , Guid AppointmentId , UpdateAppointmentDetailsRequest request,
+          CancellationToken cancellationToken = default)
+        {
+            var appointment = await _db.Set<Appointment>()
+                .FindAsync(AppointmentId, cancellationToken); 
+
+            if(appointment == null)
+                return Result.Failure(AppointmentErrors.AppointmentNotFound);
+
+            if (appointment.DoctorId != DoctorId)
+                return Result.Failure(AppointmentErrors.UnauhorizedDetailsUpdate);
+
+            if (!appointment.IsDone)
+                return Result.Failure(AppointmentErrors.CanNotUpdateDetails);
+
+            appointment.AppointmentDetails = request.AppointmentDetails;
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return Result.Success();
+        }
     }
 }

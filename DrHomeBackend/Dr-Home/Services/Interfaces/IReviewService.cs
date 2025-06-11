@@ -14,10 +14,12 @@ namespace Dr_Home.Services.Interfaces
 
         Task<bool>IsPatientReviewedBefore(Guid patientId , Guid DoctorId , CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId);
 
-        Task<IEnumerable<Review>>GetPatientReviews(Guid PatientId);
+        Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId , CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<Review>>GetPatientReviews(Guid PatientId , CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Review>> GetReportedReviews();
         Task<IEnumerable<Review>> GetAll();
         
     }

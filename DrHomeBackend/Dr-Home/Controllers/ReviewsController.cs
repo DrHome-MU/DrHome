@@ -56,6 +56,22 @@ namespace Dr_Home.Controllers
 
             return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
+        /// <summary>
+        /// Get The Reviews Of Specific Patient
+        /// </summary>
+        /// <param name="PatientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet("PatientReviews/{PatientId}")]
+        [Authorize(Roles = "Admin,Patient")]
+        [ProducesResponseType(typeof(IEnumerable<GetReviewDto>), 200)]
+        public async Task<IActionResult> GetPatientReviews([FromRoute] Guid PatientId, CancellationToken cancellationToken)
+        {
+            var result = await _reviewHelper.GetPatientReviews(PatientId, cancellationToken);
+
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        }
+
 
        
 
@@ -76,6 +92,16 @@ namespace Dr_Home.Controllers
             return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
 
+        [HttpGet("GetReportedReviews")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> GetReportedReviews()
+        {
+            var result = await _reviewHelper.GetReportedReviews();
+
+            return Ok(result.Value);
+        }
+
         /// <summary>
         /// Update Review By Patient
         /// </summary>
@@ -91,6 +117,20 @@ namespace Dr_Home.Controllers
         public async Task<IActionResult> UpdateReview([FromRoute] Guid ReviewId ,  UpdateReviewDto dto , CancellationToken cancellationToken)
         {
            var result = await _reviewHelper.UpdateReview(ReviewId,dto, cancellationToken);
+
+            return result.IsSuccess ? NoContent() : result.ToProblem();
+        }
+        /// <summary>
+        /// Report Review By The Doctor
+        /// </summary>
+        /// <param name="ReviewId"></param>
+        /// <returns></returns>
+
+        [HttpPut("ReportReview/{ReviewId}")]
+        [Authorize(Roles = "Doctor,Admin")]
+        public async Task<IActionResult> ReportReview([FromRoute] Guid ReviewId)
+        {
+            var result = await _reviewHelper.ReportReview(ReviewId);
 
             return result.IsSuccess ? NoContent() : result.ToProblem();
         }
