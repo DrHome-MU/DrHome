@@ -1,32 +1,44 @@
 ﻿
+using Dr_Home.DTOs.RegionDtos;
 using Dr_Home.UnitOfWork;
+using System.Text.Json;
 
 namespace Dr_Home.Helpers.helpers
 {
-    public class CityHelper(IUnitOfWork _unitOfWork) : ICityHelper
+    public class CityHelper(IWebHostEnvironment environment) : ICityHelper
     {
-        public async Task<ApiResponse<City>> AddAsync(string name, CancellationToken cancellationToken = default)
+        private readonly IWebHostEnvironment _environment = environment;
+
+
+        public async Task<ApiResponse<IEnumerable<City>>> GetAllAsync(string lang)
         {
-            var city  = new City { Name = name };
+            var filePath = Path.Combine(_environment.ContentRootPath, "Data", "governorate.json");
 
-            if (await _unitOfWork._cityService.GetByNameAsync(name) != null)
-                return new ApiResponse<City> { Success = false, Message = "Already Added!!" };
+            if (!System.IO.File.Exists(filePath))
+                return new ApiResponse<IEnumerable<City>>
+                {
+                    Success = false,
+                    Message = "There Is No Data",
 
-            await _unitOfWork._cityService.AddAsync(city , cancellationToken);  
-            await _unitOfWork.Complete(cancellationToken);
+                };
 
-            return new ApiResponse<City> {Success = true, Message ="Done!" , Data = city};
+            var json = await System.IO.File.ReadAllTextAsync(filePath);
+            var governorates = JsonSerializer.Deserialize<List<Governorate>>(json);
 
-        }
 
-        public async Task<ApiResponse<IEnumerable<City>>> GetAllAsync(CancellationToken cancellationToken = default)
-        {
-            var values = await _unitOfWork._cityService.GetAllAsync(cancellationToken);
+            var citiess = governorates!.Select(g => new City
+            {
+                Id = g.Id,
+                Name = (lang == "ar") ?  g.Governorate_Name_Ar : g.Governorate_Name_En
+            });
+          
 
-            if (!values.Any())
-                return new ApiResponse<IEnumerable<City>> { Success = false  , Message = "There Is No Data" , Data = values};
-
-            return new ApiResponse<IEnumerable<City>> {Success = true , Message = "Cities Loaded Successfully" , Data = values };
+            return new ApiResponse<IEnumerable<City>>
+            {
+                Success = true,
+                Message = "Cities Loaded Successfully",
+                Data = citiess
+            };
         }
     }
 }

@@ -10,5 +10,7 @@ namespace Dr_Home.Helpers.Interfaces
         Task<ApiResponse<IEnumerable<Specialization>>> GetAllAsync(CancellationToken cancellationToken = default);
 
         Task<ApiResponse<Specialization>> DeleteAsync(int id , CancellationToken cancellationToken = default);
+
+        Task<Result> updateAsync(int id, IFormFile? _pic, CancellationToken cancellationToken = default);
     }
 }

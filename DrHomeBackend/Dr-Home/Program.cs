@@ -22,7 +22,7 @@ var app = builder.Build();
 
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.MapOpenApi();
+  //  app.MapOpenApi();
 
 
 

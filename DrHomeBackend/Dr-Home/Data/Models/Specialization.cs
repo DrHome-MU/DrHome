@@ -9,6 +9,7 @@ namespace Dr_Home.Data.Models
         [MaxLength(100)]
         public string Name { get; set; }
 
+        public string? PicturePath { get; set; }
         public List<Doctor >? Doctors { get; set; }
     }
 }

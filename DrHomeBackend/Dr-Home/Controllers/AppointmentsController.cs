@@ -138,17 +138,42 @@ namespace Dr_Home.Controllers
         /// </summary>
         /// <param name="AppintmentId"></param>
         /// <param name="cancellationToken"></param>
+        /// <param name="request">
+        /// <br/>
+        /// IsDone : The Appointment Is Done Or Not (true or false) <br/>
+        /// AppointmentDetails:can be empty string not null ,if appointment is not null send it empty, otherwise can be empty or doctor enter value
+        /// </param>
         /// <returns></returns>
         /// <response code = "204">Updated Successfully</response>
         /// <response code = "404">Appointment doesn`t exist</response>
         [HttpPut("Appointments/{AppintmentId}/toggleDone")]
         [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> toggleDone([FromRoute] Guid AppintmentId , CancellationToken cancellationToken)
+        public async Task<IActionResult> toggleDone([FromRoute] Guid AppintmentId, [FromBody] AppointmentDoneRequest request, CancellationToken cancellationToken)
         {
-            var result = await _appointmentHelepr.toggleDoneeAsync(AppintmentId , cancellationToken);
+            var result = await _appointmentHelepr.toggleDoneAsync(AppintmentId, request, cancellationToken);
 
-            return result.IsSuccess? NoContent() : result.ToProblem();
+            return result.IsSuccess ? NoContent() : result.ToProblem();
         }
+        /// <summary>
+        /// Update Appointment Details By Doctor Who add it
+        /// </summary>
+        /// <param name="DoctorId"></param>
+        /// <param name="AppointmentId"></param>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <response code = "404">Appointment Is Not Found</response>
+        /// <response code = "401">Unauthorized Update By This Doctor</response>
+        /// <response code = "400">cannot update because appointment is not done</response>
+        [HttpPut("Doctors/{DoctorId}/AppointmentsDetails/{AppointmentId}")]
+        [Authorize(Roles = "Doctor")]
+        public async Task<IActionResult> UpdateAppointmentDetailsByDoctor([FromRoute] Guid DoctorId, [FromRoute] Guid AppointmentId,
+            UpdateAppointmentDetailsRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _appointmentHelepr.UpdateAppointmentDetails(DoctorId, AppointmentId, request, cancellationToken);
+            return result.IsSuccess ? NoContent() : result.ToProblem();
+        }
+
         /// <summary>
         /// Ask if this patient has at least one completed appointment With This Doctor
         /// </summary>
@@ -164,6 +189,33 @@ namespace Dr_Home.Controllers
         public async Task<IActionResult>CompletedAppointment([FromQuery] Guid PatientId , [FromQuery] Guid DoctorId , CancellationToken cancellationToken)
         {
             var result = await _appointmentHelepr.AppointmentIsDoneAsync(PatientId , DoctorId , cancellationToken);
+            return Ok(result.Value);
+        }
+        /// <summary>
+        /// this will be in doctor profile to show  his appointment details 
+        /// </summary>
+        /// <param name="DoctorId"></param>
+        /// <returns></returns>
+
+        [HttpGet("Doctors/{DoctorId}/AppointmentsDetails")]
+        [Authorize(Roles = "Doctor")]
+        [ProducesResponseType(typeof(IEnumerable<DoctorAppointmentsDetailsResponse>), 200)]
+        public async Task<IActionResult> GetDoctorAppointmentsDetails([FromRoute] Guid DoctorId)
+        {
+            var result = await _appointmentHelepr.GetDoctorAppointmentsDetailsAsync(DoctorId);  
+            return Ok(result.Value);
+        }
+        /// <summary>
+        /// this return the medical history of the patient on the platform
+        /// </summary>
+        /// <param name="PatientId"></param>
+        /// <returns></returns>
+        [HttpGet("Patients/{PatientId}/AppointmentsDetails")]
+        [Authorize]
+        [ProducesResponseType(typeof(IEnumerable<PatientAppointmentsDetailsResponse>) , 200)]
+        public async Task<IActionResult> GetPatientAppointmentsDetails([FromRoute] Guid PatientId)
+        {
+            var result = await _appointmentHelepr.GetPatientAppointmentsDetailsAsync(PatientId);
             return Ok(result.Value);
         }
     }

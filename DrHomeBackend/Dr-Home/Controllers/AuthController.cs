@@ -1,4 +1,5 @@
 ﻿using Dr_Home.Data.Models;
+using Dr_Home.DTOs.AppointmentDTOs;
 using Dr_Home.DTOs.AuthDTOs;
 using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
@@ -66,21 +67,45 @@ namespace Dr_Home.Controllers
                 Success = response.Success,
                 message = response.Message,
                 token = response.token , 
-                role = response.Data.role,
+                role = response.Data!.role,
                 userId = response.Data.Id,
                 email = response.Data.Email
             });
         }
         
-        //Verify Endpoint
-        [HttpGet("verify")]
-        [Authorize]
-        public async Task<IActionResult> VerifyAccount([FromQuery] string token)
+       /// <summary>
+       /// The Endpoint to verify email and active account after register
+       /// </summary>
+       /// <param name="checkCodeDto">
+       ///  <br/>
+       ///  Email : The Email of the user  <br/>
+       ///  Code : الكود اللي اتبعت لليوزر عالايميل <br/>
+       ///  both of them Is Required (cannot be null or empty)
+       ///  
+       /// </param>
+       /// <returns></returns>
+        [HttpPost("active-account")]
+        [ProducesResponseType(typeof(ActiveAccountResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> VerifyAccount(CheckCodeDto checkCodeDto)
         {
-            bool IsVerified = await _auth.VerifyAccount(token);
-            return (IsVerified) ? Ok("The Account Is Verified Successfully") : Unauthorized();
+            var result = await _auth.VerifyAccount(checkCodeDto);
+            return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
-        
+        /// <summary>
+        /// This Endpoint To Resend The Verfication Code again to user email
+        /// </summary>
+        /// <param name="dto">
+        /// <br/>
+        /// Email : User Email
+        /// </param>
+        /// <returns></returns>
+        [HttpPost("resend-verfication-code")]
+        public async Task<IActionResult> ResendVerficationCode(ResendVerficationCodeDto dto)
+        {
+            var result = await _auth.ResendVerifcationCode(dto);
+
+            return result.IsSuccess ? Ok() : result.ToProblem();
+        }
         //Get All Users Endpoint
         [HttpGet("")]
         [Authorize(Roles = "Admin")]
@@ -153,24 +178,48 @@ namespace Dr_Home.Controllers
 
             return ( !response.Success ) ? BadRequest(response) : Ok(response) ;
         }
-        
-        //Delete User By Id Endpoint
-        [HttpDelete("{id}")]
+        [HttpGet("GetAll")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser([FromRoute]Guid id)
+        public async Task<IActionResult> GetAllUsers()
         {
-            var response = await _auth.DeleteUser(id);
+            var result = await _auth.GetAllUsers();
+
+            return Ok(result);  
+        }
+        
+        
+        [HttpPut("PanUser/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PanUser([FromRoute]Guid id , [FromQuery] int numOfPanDays)
+        {
+            var response = await _auth.PanUser(id,numOfPanDays);
             
             return (response.Success) ? Ok(response) : NotFound(response);
         }
-
-
-        [HttpGet("forgetpassword")]
-        public async Task<IActionResult> ForgotPassword(forgotPasswordDto dto)
+        [HttpPut("EnableUser/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> EnableUser([FromRoute] Guid id)
         {
-            var response = await _auth.ForgetPassword(dto);
+            var response = await _auth.EnableUser(id);
 
-            return (response == "user doesn`t exist") ? NotFound(response) : Ok(response);
+            return (response) ? NoContent() : NotFound(response);
+        }
+
+        [HttpPost("forget-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgetPasswordDto dto)
+        {
+            var result = await _auth.ForgetPassword(dto);
+
+            return result.IsSuccess ? Ok() : result.ToProblem();
+        }
+
+        [HttpPut("reset-password")]
+
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var result = await _auth.ResetPassword(dto);
+
+            return result.IsSuccess ? NoContent() : result.ToProblem();
         }
     }
 }

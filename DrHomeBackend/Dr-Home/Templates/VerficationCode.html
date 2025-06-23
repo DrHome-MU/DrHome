@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dr-Home OTP Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 {
+            color: #333333;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .otp-box {
+            margin: 20px auto;
+            display: inline-block;
+            background-color: #f0f4f8;
+            padding: 15px 25px;
+            font-size: 24px;
+            letter-spacing: 4px;
+            border-radius: 6px;
+            color: #333333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Your Verfication Code</h2>
+        <p>Hello, {{Name}}</p>
+        <p>We received register request from this email on <strong>Dr-Home</strong>.</p>
+        <p>Please use the code below to active your account and complete the process:</p>
+
+        <div class="otp-box">
+            {{otp_code}}
+        </div>
+
+        <p>This code is valid for the next 5 minutes. Do not share it with anyone.</p>
+        <p>If you didn’t request this, please ignore this email.</p>
+    </div>
+</body>
+</html>

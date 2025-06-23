@@ -1,6 +1,7 @@
 ﻿using Dr_Home.Data.Models;
 using Dr_Home.DTOs.ReviewDtos;
 using Dr_Home.Helpers.Interfaces;
+using Dr_Home.Migrations;
 using Dr_Home.Services.Interfaces;
 using Dr_Home.UnitOfWork;
 using Mapster;
@@ -85,7 +86,7 @@ namespace Dr_Home.Helpers.helpers
             if(doctor == null)
                 return Result.Failure<IEnumerable<GetReviewDto>>(DoctorErrors.DoctorNotFound);
 
-            var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId);
+            var reviews = await _unitOfWork._reviewService.GetDoctorReviews(DoctorId,cancellationToken);
  
 
             List<GetReviewDto> result = new List<GetReviewDto>();
@@ -100,7 +101,59 @@ namespace Dr_Home.Helpers.helpers
             return Result.Success<IEnumerable<GetReviewDto>>(result);
 
         }
+        public async Task<Result<IEnumerable<GetReviewDto>>> GetPatientReviews(Guid PatientId, CancellationToken cancellationToken = default)
+        {
+            var patient = await _unitOfWork._patientService.GetById(PatientId); 
 
+            if(patient == null)
+                return Result.Failure<IEnumerable<GetReviewDto>>(PatientErrors.PatientNotFound);
+
+            var reviews = await _unitOfWork._reviewService.GetPatientReviews(PatientId,cancellationToken);
+
+            List<GetReviewDto> result = new List<GetReviewDto>();
+
+            foreach (var review in reviews)
+            {
+                var dto = review.Adapt<GetReviewDto>();
+                dto.ReviwerName = review.patient!.FullName;
+                result.Add(dto);
+            }
+
+            return Result.Success<IEnumerable<GetReviewDto>>(result);
+
+        }
+
+        public async Task<Result> ReportReview(Guid id)
+        {
+            var review = await _unitOfWork._reviewService.GetReviewById(id);    
+
+            if(review == null)
+                return Result.Failure(ReviewErrors.ReviewNotFound);
+
+            review.IsReported = !review.IsReported;
+
+            await _unitOfWork.Complete();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<GetReviewDto>>> GetReportedReviews()
+        {
+            var reportedReviews = await _unitOfWork._reviewService.GetReportedReviews();
+
+            List<GetReviewDto> result = new List<GetReviewDto>();
+
+            foreach (var review in reportedReviews)
+            {
+                var dto = review.Adapt<GetReviewDto>();
+                dto.ReviwerName = review.patient!.FullName;
+                result.Add(dto);
+            }
+
+            return Result.Success<IEnumerable<GetReviewDto>>(result);
+        }
+
+            
         public async  Task<Result> UpdateReview(Guid ReviewId, UpdateReviewDto dto , CancellationToken cancellationToken = default)
         {
             var review = await _unitOfWork._reviewService.GetReviewById(ReviewId);

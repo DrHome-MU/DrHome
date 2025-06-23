@@ -27,18 +27,24 @@ namespace Dr_Home.Services.services
             return reviews;
         }
 
-        public async Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId)
+        public async Task<IEnumerable<Review>> GetDoctorReviews(Guid DoctorId, CancellationToken cancellationToken = default)
         {
            var reviews = await db.Set<Review>().Include(r=>r.patient).
-                Where(r=>r.DoctorId == DoctorId).ToListAsync();
+                Where(r=>r.DoctorId == DoctorId).ToListAsync(cancellationToken);
 
             return reviews;
         }
 
-        public async Task<IEnumerable<Review>> GetPatientReviews(Guid PatientId)
+        public async Task<IEnumerable<Review>> GetPatientReviews(Guid PatientId, CancellationToken cancellationToken = default)
         {
-           var reviews = await db.Set<Review>().Include(r => r.patient).Where(x=>x.PatientId == PatientId).ToListAsync();
+           var reviews = await db.Set<Review>().Include(r => r.patient).Where(x=>x.PatientId == PatientId).ToListAsync(cancellationToken);
 
+            return reviews;
+        }
+
+        public async Task<IEnumerable<Review>> GetReportedReviews()
+        {
+            var reviews = await db.Set<Review>().Include(r => r.patient).Where(x => x.IsReported == true).ToListAsync(); 
             return reviews;
         }
 

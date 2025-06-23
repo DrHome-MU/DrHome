@@ -9,13 +9,16 @@ using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
 using Mapster;
 using System.Reflection.Metadata.Ecma335;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace Dr_Home.Helpers.helpers
 {
     public class DoctorHelper(IUnitOfWork _unitOfWork,IAuthHelper _auth,
-        IFileManager _fileManager , IClinicHelper clinicHelper) : IDoctorHelper
+        IFileManager _fileManager , IClinicHelper clinicHelper
+        ,IEmailSender emailSender) : IDoctorHelper
     {
         private readonly IClinicHelper _clinicHelper = clinicHelper;
+        private readonly IEmailSender _emailSender = emailSender;
 
         public async Task<ApiResponse<GetDoctorDto>> AddDoctor(AddDoctorDto dto)
         {
@@ -36,6 +39,8 @@ namespace Dr_Home.Helpers.helpers
 
             await _unitOfWork._doctorService.AddAsync(doctor);
             await _unitOfWork.Complete();
+            //Send Email Message
+            await SendDoctorCredentials(doctor , dto.Password); 
 
             var res = doctor.Adapt<GetDoctorDto>();
 
@@ -49,7 +54,24 @@ namespace Dr_Home.Helpers.helpers
         }
 
         /// Delete Doctor
+        public async Task SendDoctorCredentials(User user , string password) {
+            var emailBody = EmailBodyBuilder.GenerateEmailBody("DoctorCredentials",
+              templateModel: new Dictionary<string, string>
+              {
+                  { "{{name}}" , $"{user.FullName}" },
+                       {"{{email}}" , $"{user.Email}" },
+                  {"{{password}}" , $"{password}" }
 
+              });
+
+            var emailDto = new SendEmailRegisterDto
+            {
+                toEmail = user.Email,
+                subject = "Doctor Credentials",
+                message = emailBody
+            };
+            await _emailSender.SendRegisterEmailAsync(emailDto);
+        }
 
         public async Task<ApiResponse<Doctor>> DeleteDoctor(Guid id)
         {

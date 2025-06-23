@@ -7,7 +7,10 @@ namespace Dr_Home.Data.Models
         [Key]
         public Guid Id { get; set; }
 
+        public DateOnly? AppointmentDate { get; set; }
+
         public TimeOnly AppointmentTime {  get; set; }
+
 
         public string PatientName { get; set; } = string.Empty;
 
@@ -17,6 +20,7 @@ namespace Dr_Home.Data.Models
 
         public bool IsDone { get; set; } = false;
 
+        public string AppointmentDetails { get; set; } = string.Empty; 
         public Guid? DoctorId { get; set; }
 
         public Doctor? _doctor { get; set; } 

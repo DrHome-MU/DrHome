@@ -27,5 +27,6 @@
         public string? region { get; set; }
 
         public DateOnly? DateOfBirth { get; set; }
+        public DateTime? BannedTo { get; set; }
     }
 }

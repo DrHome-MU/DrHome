@@ -14,6 +14,8 @@
 
         public string? ClinicPhoneNumber {  get; set; }
 
+        public decimal AppointmentFee { get; set; }
+
         public DateOnly AppointmentDate {  get; set; }
         public TimeOnly AppointmentTime {  get; set; }
 

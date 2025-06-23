@@ -1,15 +1,18 @@
 ﻿using Dr_Home.Authentication;
 using Dr_Home.Data.Models;
 using Dr_Home.DTOs.AuthDTOs;
+using Dr_Home.DTOs.DoctorDtos;
 using Dr_Home.DTOs.EmailSender;
 using Dr_Home.Email_Sender;
 using Dr_Home.Helpers.Interfaces;
 using Dr_Home.UnitOfWork;
 using Hangfire;
+using Mapster;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Emit;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,10 +26,6 @@ namespace Dr_Home.Helpers.helpers
 
         public async Task<ApiResponse<Patient>> RegisterPatient(RegisterDto dto)
         {
-           
-            var random = new Random();
-            string confimationCode = random.Next(100000, 999999).ToString(); 
-
             var HashPass = HashPassword(dto.Password);
             if(await _unitOfWork._userService.IsEmailExists(dto.Email))
             {
@@ -46,35 +45,14 @@ namespace Dr_Home.Helpers.helpers
                 HashPassword = HashPass,
                 PhoneNumber = dto.PhoneNumber,
                 role = "Patient",
-                ConfirmationCode = confimationCode,
                 DateOfBirth = dto.DateOfBirth,
             };
 
               await _unitOfWork._patientService.AddAsync(patient);
               await  _unitOfWork.Complete();
 
+            await SendVerfiyCodeAsync(patient, "VerficationCode");
 
-            string token =  _jwtProvider.GenerateToken(patient);
-            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "https://localhost:3000";
-            string link = $"{appUrl}/api/auth/verify?token={token}";
-
-            string html_tmp = $@"
-            <div>
-                <p>Click on the link below to verify your account</p>
-                <a href='{link}'>Verify</a>
-            </div>";
-
-
-            var sendDto = new SendEmailRegisterDto
-            {
-                toEmail = patient.Email,
-                subject = "Dr Home Verfication",
-                message = html_tmp
-            };
-
-            BackgroundJob.Enqueue(() => _sender.SendRegisterEmailAsync(sendDto));
-
-            //await _sender.SendRegisterEmailAsync(sendDto);
             return new ApiResponse<Patient>
             {
                 Success = true,
@@ -83,7 +61,45 @@ namespace Dr_Home.Helpers.helpers
             };
 
         }
-        
+        public async Task SendVerfiyCodeAsync(User user , string template)
+        {
+            var random = new Random();
+            var code = random.Next(100000, 999999).ToString();
+
+            var emailBody = EmailBodyBuilder.GenerateEmailBody(template,
+             templateModel: new Dictionary<string, string>
+             {
+                  { "{{Name}}" , $"{user.FullName}" },
+                       {"{{otp_code}}" , $"{code}" }
+
+             });
+
+            if (template == "ResetPassword")
+            {
+                var sendDto = new SendEmailRegisterDto
+                {
+                    toEmail = user.Email,
+                    message = emailBody,
+                    subject = "Your Reset Password Code (Valid For 5 Minutes)"
+                };
+                await _sender.SendRegisterEmailAsync(sendDto);
+                user.HashForgetPasswordCode = HashPassword(code);
+                user.ForgetPasswordCodeExpiryTime = DateTime.UtcNow.AddMinutes(5);
+            }
+            else
+            {
+                var sendDto = new SendEmailRegisterDto
+                {
+                    toEmail = user.Email,
+                    message = emailBody,
+                    subject = "Your Verfication Code (Valid For 5 Minutes)"
+                };
+                await _sender.SendRegisterEmailAsync(sendDto);
+                user.HashVerficationCode = HashPassword(code);
+                user.VerficationCodeExpiryTime = DateTime.UtcNow.AddMinutes(5);
+            }
+            await _unitOfWork.Complete();
+        }
         public string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
@@ -126,7 +142,16 @@ namespace Dr_Home.Helpers.helpers
            //         Data = null
            //     };
            // }
-          
+
+          if(user.BannedTo != null && user.BannedTo > DateTime.UtcNow)
+            {
+                return new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = $"Your Account Is Banned To {user.BannedTo}"
+                };
+            }
+
             return new ApiResponse<User>
             {
                 Success = true,
@@ -136,20 +161,36 @@ namespace Dr_Home.Helpers.helpers
             };
         }
 
-        public async Task<bool> VerifyAccount(string token)
+        public async Task<Result<ActiveAccountResponse>> VerifyAccount(CheckCodeDto checkCodeDto)
         {
-            var handler = new JwtSecurityTokenHandler();
+           var user = await _unitOfWork._userService.GetByEmail(checkCodeDto.Email);
 
-            var jwtToken = handler.ReadJwtToken(token);
-            var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if(user == null)
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.WrongVerficationCode);
 
-            if (userId == null) return false;
-            var user = await _unitOfWork._userService.GetById(Guid.Parse(userId));
-            if (user == null) return false;
+            if(user.IsActive) 
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.AccountAlreadyActive);
+
+            if (user.HashVerficationCode == null || user.VerficationCodeExpiryTime == null)
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.WrongVerficationCode);
+
+            if (!VerifyPassword(checkCodeDto.Code, user.HashVerficationCode) || user.VerficationCodeExpiryTime < DateTime.UtcNow)
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.WrongVerficationCode); 
+
             user.IsActive = true;
+            user.HashVerficationCode = null;
+            user.VerficationCodeExpiryTime = null;
+
+            var response = new ActiveAccountResponse
+            {
+                Email = user.Email,
+                UserId = user.Id,
+                Token = _jwtProvider.GenerateToken(user)
+            };
+
             await _unitOfWork.Complete();
 
-            return true;
+            return Result.Success(response);
         }
 
         public async Task<ApiResponse<IEnumerable<User>>> GetUsers()
@@ -171,7 +212,7 @@ namespace Dr_Home.Helpers.helpers
             };
         }
 
-        public async Task<ApiResponse<User>> DeleteUser(Guid id)
+        public async Task<ApiResponse<User>> PanUser(Guid id , int numOfPanDays)
         {
             
             var user = await _unitOfWork._userService.GetById(id);
@@ -181,29 +222,11 @@ namespace Dr_Home.Helpers.helpers
                 return new ApiResponse<User> { Success = false, Message = "Users Doesn`t Exist" };
             }
 
-            if (user.role == "Patient")
-            {
-                var patient = await _unitOfWork._patientService.GetById(user.Id);
-                
-                var reviews = patient.Reviews;
-                var appointments = patient._appointments;
-
-                foreach (var review in reviews!)
-                {
-                    await _unitOfWork._reviewService.DeleteAsync(review);
-                }
-
-                foreach(var appointment in appointments!)
-                {
-                    appointment.IsActive = false;
-                    appointment.PatientId = null;
-                }
-              await  _unitOfWork.Complete();
-            }
-            await _unitOfWork._userService.DeleteAsync(user);
+           user.BannedTo = DateTime.UtcNow.AddDays(numOfPanDays);
+           // await _unitOfWork._userService.DeleteAsync(user);
             await  _unitOfWork.Complete();
 
-            return new ApiResponse<User> { Success = true, Message = "User Deleted Successfully" };
+            return new ApiResponse<User> { Success = true, Message = $"User Panned For {numOfPanDays} Successfully." };
         }
 
         public async Task<ApiResponse<User>> GetUser(Guid id)
@@ -333,31 +356,83 @@ namespace Dr_Home.Helpers.helpers
             };
         }
 
-        public async Task<string> ForgetPassword(forgotPasswordDto dto)
+        public async Task<Result> ForgetPassword(ForgetPasswordDto dto)
+        {
+            if (await _unitOfWork._userService.GetByEmail(dto.Email) is not { } user)
+                return Result.Success();
+
+            await SendVerfiyCodeAsync(user, "ResetPassword"); 
+
+            return Result.Success();    
+        }
+
+        public async Task<GetAllUsersResponse> GetAllUsers()
+        {
+            var patients = await _unitOfWork._patientService.GetAllAsync();
+            var doctors = await _unitOfWork._doctorService.GetAllAsync();
+
+            var result = new GetAllUsersResponse
+            {
+                Doctors = doctors.Adapt<IEnumerable<ShowDoctorDataDto>>(), 
+                Patients = patients.Adapt<IEnumerable<UserProfileDto>>(),
+                NumberOfDoctors = doctors.Count(),
+                NumberOfPatients = patients.Count()
+            };  
+           
+            
+           return result;   
+        }
+
+        public async Task<bool> EnableUser(Guid id)
+        {
+            var user = await _unitOfWork._userService.GetById(id);
+
+            if (user == null)
+                return false;
+
+            user.BannedTo = null;
+
+            await _unitOfWork.Complete();
+
+            return true;
+
+        }
+
+        public async Task<Result> ResendVerifcationCode(ResendVerficationCodeDto dto)
+        {
+            if (await _unitOfWork._userService.GetByEmail(dto.Email) is not { } user)
+                return Result.Success();
+
+            if (user.IsActive)
+                return Result.Failure(AuthErrors.AccountAlreadyActive);
+
+            await SendVerfiyCodeAsync(user, "VerficationCode");
+
+            return Result.Success();
+
+        }
+
+        public async Task<Result> ResetPassword(ResetPasswordDto dto)
         {
             var user = await _unitOfWork._userService.GetByEmail(dto.Email);
 
-            if (user == null) { return "user doesn`t exist"; }
-          
-            string token = _jwtProvider.GenerateToken(user);
-            string appUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://dr-home.runasp.net";
-            string link = $"{appUrl}/api/auth/ChangePassword?token={token}";
-            string html_tmp = $@"
-            <div>
-                <p>Click on the link below to reset your account password</p>
-                <a href='{link}'>Reset</a>
-            </div>";
-            
-            var sendDto = new SendEmailRegisterDto
-            {
-                toEmail = dto.Email,
-                subject = "Dr Home Reset Password",
-                message = html_tmp
-            };
+            if(user == null || !user.IsActive)
+                return Result.Failure(AuthErrors.WrongForgetPasswordCode);
 
-            await _sender.SendRegisterEmailAsync(sendDto);
+            if (user.HashForgetPasswordCode == null || user.ForgetPasswordCodeExpiryTime == null)
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.WrongForgetPasswordCode);
 
-            return token;
+            if (!VerifyPassword(dto.Code, user.HashForgetPasswordCode) || user.ForgetPasswordCodeExpiryTime < DateTime.UtcNow)
+                return Result.Failure<ActiveAccountResponse>(AuthErrors.WrongForgetPasswordCode);
+
+            var hasPassword = HashPassword(dto.NewPassword);
+
+            user.HashPassword = hasPassword;
+
+
+            await _unitOfWork.Complete(); 
+
+            return Result.Success();    
         }
     }
 }

@@ -39,5 +39,10 @@
   <ItemGroup>
     <Folder Include="wwwroot\Pictures\" />
   </ItemGroup>
-
+	
+	<ItemGroup>
+		<Content Include="Templates\*.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 </Project>
