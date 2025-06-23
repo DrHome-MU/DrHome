@@ -109,7 +109,7 @@ namespace Dr_Home.Helpers.helpers
             var clinic = await _db.Set<Clinic>().FirstOrDefaultAsync(c => c.Id == ClinicId && c.DoctorId == DoctorId);
 
             if (clinic == null)
-            return Result.Failure<IEnumerable<ScheduleResponse>>(ClinicErrors.ClinicNotFound);
+                return Result.Failure<IEnumerable<ScheduleResponse>>(ClinicErrors.ClinicNotFound);
 
             var schedules = await _db.Set<Doctor_Schedule>()
                 .Include(s => s._appointments)
@@ -135,12 +135,6 @@ namespace Dr_Home.Helpers.helpers
             }
 
             return Result.Success<IEnumerable<ScheduleResponse>>(result);
-
-
-
-
-
-
         }
 
         public async Task<Result> UpdateAsync(Guid ScheduleId, ScheduleRequest request, CancellationToken cancellationToken = default)
