@@ -50,8 +50,10 @@ namespace Dr_Home.Helpers.helpers
             //    options.JsonSerializerOptions.MaxDepth = 64; // Optional: Increase max depth if necessary
             //});
 
-            services.AddOpenApi();
-            services.AddSwaggerGen(options => {
+            // services.AddOpenApi();
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen(options =>
+            {
                 var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });

@@ -1,4 +1,5 @@
 ﻿using Dr_Home.Data.Models;
+using Dr_Home.DTOs.SupportDtos;
 using Dr_Home.UnitOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -29,10 +30,10 @@ namespace Dr_Home.Controllers
 
             return (response.Success) ? Ok(response) : NotFound(response);
         }
-        [HttpPut("{id}")]
-        public async Task<IActionResult> update([FromRoute] int id , [FromForm] IFormFile? _pic ,CancellationToken cancellationToken)
+        [HttpPut("")]
+        public async Task<IActionResult> update([FromForm] UpdateSpecializationDto dto ,CancellationToken cancellationToken)
         {
-            var result = await _specializationHelper.updateAsync(id , _pic, cancellationToken);
+            var result = await _specializationHelper.updateAsync(dto.id , dto._pic, cancellationToken);
             return result.IsSuccess ? NoContent() : result.ToProblem();
         }
         [HttpDelete("{id}")]
